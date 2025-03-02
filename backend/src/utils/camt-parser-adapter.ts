@@ -29,6 +29,43 @@ interface BankTxCode {
   };
 }
 
+// Additional interfaces to type check CAMT parser output
+interface SummaryDetail {
+  numberOfEntries: string;
+  sum: string | number;
+}
+
+interface TransactionSummary {
+  totalCreditEntries?: SummaryDetail;
+  totalDebitEntries?: SummaryDetail;
+}
+
+interface Party {
+  name?: string;
+  postalAddress?: any;
+  id?: any;
+}
+
+interface AccountIdentification {
+  iban?: string;
+  other?: any;
+}
+
+interface RemittanceInformation {
+  unstructured?: string | string[];
+  structured?: {
+    creditorReferenceInformation?: {
+      reference?: string;
+      type?: {
+        codeOrProprietary?: {
+          code?: string;
+        }
+      }
+    };
+    additionalRemittanceInformation?: string | string[];
+  }
+}
+
 /**
  * Processes a CAMT.053 XML file and stores the data in the database
  * @param xmlContent The CAMT.053 XML content as string
@@ -84,9 +121,23 @@ async function processCamtStatement(
   }
   
   // Extract credit/debit totals from transaction summary
-  const txSummary: TxSummary = statement.transactionSummary as TxSummary || { 
-    totalCreditEntries: { numberOfEntries: 0, sum: 0 },
-    totalDebitEntries: { numberOfEntries: 0, sum: 0 }
+  const txSummary: TxSummary = {
+    totalCreditEntries: { 
+      numberOfEntries: statement.transactionSummary?.totalCreditEntries?.numberOfEntries 
+        ? parseInt(statement.transactionSummary.totalCreditEntries.numberOfEntries) 
+        : 0,
+      sum: statement.transactionSummary?.totalCreditEntries?.sum 
+        ? parseFloat(statement.transactionSummary.totalCreditEntries.sum.toString()) 
+        : 0
+    },
+    totalDebitEntries: { 
+      numberOfEntries: statement.transactionSummary?.totalDebitEntries?.numberOfEntries 
+        ? parseInt(statement.transactionSummary.totalDebitEntries.numberOfEntries) 
+        : 0,
+      sum: statement.transactionSummary?.totalDebitEntries?.sum 
+        ? parseFloat(statement.transactionSummary.totalDebitEntries.sum.toString()) 
+        : 0
+    }
   };
   
   // Create the bank statement record
@@ -203,12 +254,12 @@ async function processTransaction(
       
       // Store all references, related parties, and remittance info
       references: details?.references || {},
-      relatedParties: details?.relatedParties || {},
-      remittanceInfo: details?.remittanceInformation || {},
+      relatedParties: JSON.stringify(details?.relatedParties || {}),
+      remittanceInfo: JSON.stringify(details?.remittanceInformation || {}),
       
       // Extract structured reference information
       structuredReference: details?.remittanceInformation?.structured?.creditorReferenceInformation?.reference,
-      referenceType: details?.remittanceInformation?.structured?.creditorReferenceInformation?.type?.codeOrProprietary?.code,
+      referenceType: getDeepProperty(details?.remittanceInformation?.structured?.creditorReferenceInformation?.type, 'codeOrProprietary.code'),
       additionalRemittanceInfo: Array.isArray(details?.remittanceInformation?.structured?.additionalRemittanceInformation)
         ? details?.remittanceInformation?.structured?.additionalRemittanceInformation.join(', ')
         : details?.remittanceInformation?.structured?.additionalRemittanceInformation
@@ -244,6 +295,16 @@ function mapTransactionStatus(camtStatus: string): TransactionStatus {
   };
   
   return statusMap[camtStatus] || TransactionStatus.COMPLETED;
+}
+
+/**
+ * Safely get a nested property from an object using a path string
+ */
+function getDeepProperty(obj: any, path: string): any {
+  if (!obj) return undefined;
+  return path.split('.').reduce((prev, curr) => {
+    return prev ? prev[curr] : undefined;
+  }, obj);
 }
 
 /**
