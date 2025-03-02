@@ -9,6 +9,7 @@ This is the backend service for EBIZ-Saas, a financial management platform for s
 - **Authentication**: Google OAuth 2.0 with JWT
 - **AI Integration**: LangChain.js
 - **Vector Database**: Qdrant for AI features
+- **Bank Statements**: ISO 20022 CAMT.053 parser
 
 ## Getting Started
 
@@ -64,13 +65,15 @@ npm run start:dev
 
 - **PostgreSQL**: Running on port 5432
 - **pgAdmin 4**: Web interface available at http://localhost:5050
-  - Login with admin@ebiz.com / admin_secure_pwd
+  - Login with admin@admin.com / admin
   - Connect to the PostgreSQL server with:
     - Host: postgres
     - Port: 5432
-    - Username: ebizadmin
-    - Password: ebiz_secure_pwd
-    - Database: ebiz_saas
+    - Username: postgres
+    - Password: postgres
+    - Database: ebiz_platform
+- **MinIO**: S3-compatible storage for documents available at http://localhost:9001
+  - Login with minioadmin / minioadmin
 
 ### Database Schema
 
@@ -81,8 +84,33 @@ The database schema is designed to support the following core features:
 - Transaction tracking and categorization
 - Document uploads and parsing
 - Chat interface for data queries
+- Multi-language support
+- Recurring transaction pattern detection
 
 For detailed entity relationships, see the Prisma schema in `prisma/schema.prisma`.
+
+### CAMT Parser Integration
+
+The application includes support for ISO 20022 CAMT.053 bank statement files:
+
+- **Parser Adapter**: Located in `src/utils/camt-parser-adapter.ts`
+- **Features**:
+  - Parses CAMT.053 XML files from banks
+  - Extracts transactions, balances, and metadata
+  - Maps standard ISO 20022 fields to database schema
+  - Supports transaction reconciliation
+  - Preserves original data while providing structured access
+
+To use the CAMT parser:
+
+```typescript
+import { processCamtFile } from './utils/camt-parser-adapter';
+
+// Example: Process a CAMT file
+const xmlContent = fs.readFileSync('bank-statement.xml', 'utf8');
+const bankAccountId = 'your-bank-account-id';
+const result = await processCamtFile(xmlContent, bankAccountId);
+```
 
 ## API Documentation
 
