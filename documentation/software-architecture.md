@@ -71,7 +71,7 @@ This architecture streamlines development, improves compatibility with AI coding
   - **Prisma**: Type-safe ORM for PostgreSQL interactions, already working well in your setup.
 - **Features**:
   - **Authentication**: Implements JWT-based authentication (e.g., using `@nestjs/jwt`).
-  - **AI Integration**: LangChain.js for document processing and AI workflows, integrated into NestJS services (no issues reported, so it’s retained).
+  - **AI Integration**: LangChain.js for document processing and AI workflows, integrated into NestJS services (no issues reported, so it's retained).
   - **Hot Reloading**: Enabled with `npm run start:dev` in `backend/`.
 - **Configuration**:
   - Located in `backend/`.
@@ -85,7 +85,14 @@ This architecture streamlines development, improves compatibility with AI coding
 
 - **Purpose**: Limits Docker usage to databases only, addressing your pain point of containerizing everything in local development.
 - **Setup**:
-  - **PostgreSQL**: Relational database for structured data (e.g., users, metadata).
+  - **PostgreSQL**: Relational database for structured data with an enhanced schema design:
+    - Core data models: Users, Companies, UserSettings
+    - Financial data: BankAccounts, BankStatements, Transactions, Vendors, Customers
+    - Document management: Documents with versioning and status tracking
+    - Analytics support: Categories, BalanceHistory, CurrencyRates
+    - User experience: Alerts, ChatMessages
+    - Strong type safety with enums for statuses and types
+    - Performance optimizations with strategic indexing
   - **Qdrant**: Vector database for embeddings and search, used with LangChain.js.
 - **Configuration**:
   - Managed via `docker-compose.yml` in the root:
@@ -97,22 +104,60 @@ This architecture streamlines development, improves compatibility with AI coding
         ports:
           - "5432:5432"
         environment:
-          POSTGRES_USER: user
-          POSTGRES_PASSWORD: password
-          POSTGRES_DB: saas
+          POSTGRES_USER: ebizadmin
+          POSTGRES_PASSWORD: ebiz_secure_pwd
+          POSTGRES_DB: ebiz_saas
         volumes:
-          - pgdata:/var/lib/postgresql/data
+          - postgres_data:/var/lib/postgresql/data
+        healthcheck:
+          test: ["CMD-SHELL", "pg_isready -U ebizadmin -d ebiz_saas"]
+          interval: 10s
+          timeout: 5s
+          retries: 5
+          
+      pgadmin:
+        image: dpage/pgadmin4:latest
+        ports:
+          - "5050:80"
+        environment:
+          PGADMIN_DEFAULT_EMAIL: admin@ebiz.com
+          PGADMIN_DEFAULT_PASSWORD: admin_secure_pwd
+        volumes:
+          - pgadmin_data:/var/lib/pgadmin
+        depends_on:
+          - postgres
+          
       qdrant:
         image: qdrant/qdrant:latest
         ports:
           - "6333:6333"
+          - "6334:6334"
         volumes:
-          - qdrantdata:/qdrant/storage
+          - qdrant_data:/qdrant/storage
+        environment:
+          QDRANT_ALLOW_RECOVERY_MODE: "true"
     volumes:
-      pgdata:
-      qdrantdata:
+      postgres_data:
+      pgadmin_data:
+      qdrant_data:
     ```
-  - Backend connects via `DATABASE_URL=postgresql://user:password@localhost:5432/saas` and `QDRANT_HOST=http://localhost:6333`.
+  - Access PostgreSQL web interface via pgAdmin at: http://localhost:5050
+    - Login: admin@ebiz.com / admin_secure_pwd
+    - Connect to the database server using:
+      - Host: postgres
+      - Port: 5432
+      - Username: ebizadmin
+      - Password: ebiz_secure_pwd
+  - Backend connects via `DATABASE_URL=postgresql://ebizadmin:ebiz_secure_pwd@localhost:5432/ebiz_saas` and `QDRANT_HOST=http://localhost:6333`.
+- **Database Migration Strategy**:
+  - Prisma handles schema migrations with versioned migration files 
+  - Migration commands:
+    ```
+    npx prisma migrate dev --name <migration-name>  # Development
+    npx prisma migrate deploy                       # Production
+    ```
+  - Initial data seeding via Prisma's seed functionality
+
 - **Why This Works**: Running only databases in Docker simplifies setup, reduces overhead, and preserves hot reloading for application code on the host machine.
 
 ---

@@ -19,8 +19,26 @@ model User {
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
   companies UserCompany[]
+  settings  UserSettings?
+  chatHistory ChatMessage[]
 
   @@map("users")
+  @@index([email])
+}
+
+model UserSettings {
+  id            String  @id @default(uuid())
+  userId        String  @unique
+  primaryCurrency String @default("EUR")
+  language      String  @default("en")
+  theme         String  @default("light")
+  dashboardLayout Json?
+  notificationsEnabled Boolean @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
 }
 
 model Company {
@@ -34,8 +52,13 @@ model Company {
   users       UserCompany[]
   bankAccounts BankAccount[]
   documents   Document[]
+  vendors     Vendor[]
+  customers   Customer[]
+  alerts      Alert[]
+  categories  Category[]
 
   @@map("companies")
+  @@index([name])
 }
 
 model UserCompany {
@@ -49,6 +72,8 @@ model UserCompany {
 
   @@id([userId, companyId])
   @@map("user_companies")
+  @@index([userId])
+  @@index([companyId])
 }
 
 enum UserRole {
@@ -63,13 +88,40 @@ model BankAccount {
   iban          String          @unique
   currency      String
   name          String
+  bankName      String?
+  currentBalance Float          @default(0)
+  previousBalance Float         @default(0)
+  lastStatementDate DateTime?
+  totalStatements Int           @default(0)
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
   company       Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
   bankStatements BankStatement[]
   transactions  Transaction[]
+  balanceHistory BalanceHistory[]
 
   @@map("bank_accounts")
+  @@index([companyId])
+  @@index([currency])
+}
+
+model BalanceHistory {
+  id            String       @id @default(uuid())
+  bankAccountId String
+  date          DateTime
+  balance       Float
+  credited      Float
+  debited       Float
+  month         Int
+  year          Int
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  bankAccount   BankAccount  @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
+
+  @@map("balance_history")
+  @@index([bankAccountId])
+  @@index([year, month])
+  @@index([date])
 }
 
 model BankStatement {
@@ -81,6 +133,10 @@ model BankStatement {
   fromDate       DateTime
   toDate         DateTime
   rawData        Json
+  openingBalance Float
+  closingBalance Float
+  currency       String
+  hasGap         Boolean       @default(false)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   bankAccount    BankAccount   @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
@@ -88,28 +144,51 @@ model BankStatement {
 
   @@unique([bankAccountId, statementId])
   @@map("bank_statements")
+  @@index([bankAccountId])
+  @@index([fromDate, toDate])
+}
+
+enum TransactionStatus {
+  COMPLETED
+  PENDING
+  FAILED
 }
 
 model Transaction {
-  id              String        @id @default(uuid())
+  id              String           @id @default(uuid())
   bankStatementId String
   bankAccountId   String
   amount          Float
   currency        String
   creditDebit     CreditDebit
-  status          String
+  status          TransactionStatus @default(COMPLETED)
   bookingDate     DateTime
   valueDate       DateTime
   references      Json
   relatedParties  Json
   remittanceInfo  Json
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  bankStatement   BankStatement @relation(fields: [bankStatementId], references: [id], onDelete: Cascade)
-  bankAccount     BankAccount   @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
+  categoryId      String?
+  vendorId        String?
+  customerId      String?
+  notes           String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  bankStatement   BankStatement    @relation(fields: [bankStatementId], references: [id], onDelete: Cascade)
+  bankAccount     BankAccount      @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
   document        Document?
+  vendor          Vendor?          @relation(fields: [vendorId], references: [id])
+  customer        Customer?        @relation(fields: [customerId], references: [id])
+  category        Category?        @relation(fields: [categoryId], references: [id])
 
   @@map("transactions")
+  @@index([bankAccountId])
+  @@index([bankStatementId])
+  @@index([bookingDate])
+  @@index([valueDate])
+  @@index([creditDebit])
+  @@index([vendorId])
+  @@index([customerId])
+  @@index([categoryId])
 }
 
 enum CreditDebit {
@@ -117,17 +196,154 @@ enum CreditDebit {
   DEBIT
 }
 
+enum DocumentStatus {
+  PROCESSED
+  NEEDS_ATTENTION
+  UNDER_REVIEW
+}
+
+enum DocumentType {
+  INVOICE
+  RECEIPT
+  CONTRACT
+  STATEMENT
+  OTHER
+}
+
 model Document {
-  id           String      @id @default(uuid())
-  companyId    String
-  filePath     String
-  uploadDate   DateTime
-  transactionId String?     @unique
-  parsedData   Json
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  company      Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  transaction  Transaction? @relation(fields: [transactionId], references: [id])
+  id             String         @id @default(uuid())
+  companyId      String
+  filename       String
+  filePath       String
+  uploadDate     DateTime
+  transactionId  String?        @unique
+  parsedData     Json
+  status         DocumentStatus @default(PROCESSED)
+  type           DocumentType?
+  documentVersion Int           @default(1)
+  previousVersionId String?     @unique
+  parsingError   Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  company        Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  transaction    Transaction?   @relation(fields: [transactionId], references: [id])
+  previousVersion Document?     @relation("DocumentVersions", fields: [previousVersionId], references: [id])
+  nextVersion    Document?      @relation("DocumentVersions")
 
   @@map("documents")
+  @@index([companyId])
+  @@index([status])
+  @@index([type])
+  @@index([uploadDate])
+}
+
+model Vendor {
+  id           String       @id @default(uuid())
+  companyId    String
+  name         String
+  vatId        String?
+  contactInfo  Json?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  company      Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@unique([companyId, name])
+  @@map("vendors")
+  @@index([companyId])
+  @@index([name])
+}
+
+model Customer {
+  id           String       @id @default(uuid())
+  companyId    String
+  name         String
+  vatId        String?
+  contactInfo  Json?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  company      Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@unique([companyId, name])
+  @@map("customers")
+  @@index([companyId])
+  @@index([name])
+}
+
+enum AlertType {
+  GAP
+  REVIEW
+  BALANCE
+  SYSTEM
+}
+
+model Alert {
+  id           String     @id @default(uuid())
+  companyId    String
+  type         AlertType
+  message      String
+  accountId    String?
+  documentId   String?
+  resolved     Boolean    @default(false)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  company      Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("alerts")
+  @@index([companyId])
+  @@index([type])
+  @@index([resolved])
+}
+
+model CurrencyRate {
+  id           String     @id @default(uuid())
+  baseCurrency String
+  targetCurrency String
+  rate         Float
+  effectiveDate DateTime
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([baseCurrency, targetCurrency, effectiveDate])
+  @@map("currency_rates")
+  @@index([baseCurrency, targetCurrency])
+  @@index([effectiveDate])
+}
+
+enum CategoryType {
+  INCOME
+  EXPENSE
+  TRANSFER
+}
+
+model Category {
+  id          String       @id @default(uuid())
+  companyId   String?
+  name        String
+  description String?
+  type        CategoryType
+  color       String?
+  isSystem    Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  company     Company?     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
+
+  @@unique([companyId, name])
+  @@map("categories")
+  @@index([companyId])
+  @@index([type])
+}
+
+model ChatMessage {
+  id          String     @id @default(uuid())
+  userId      String
+  message     String
+  response    Json?
+  createdAt   DateTime   @default(now())
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("chat_messages")
+  @@index([userId])
 } 

@@ -1,4 +1,4 @@
-Below is the updated Software Requirements Specification (SRS) document for the EBIZ-Saas application, with Turborepo removed as requested. I’ve replaced references to Turborepo with npm workspaces for monorepo management, keeping everything else consistent with our previous conversation. The document remains a concise, structured blueprint for the application, designed to assist AI coding agents and align with the Product Requirements Document (PRD), User Interface Design Document (UIDD), and Software Architecture Document (SAD).
+Below is the updated Software Requirements Specification (SRS) document for the EBIZ-Saas application, with Turborepo removed as requested. I've replaced references to Turborepo with npm workspaces for monorepo management, keeping everything else consistent with our previous conversation. The document remains a concise, structured blueprint for the application, designed to assist AI coding agents and align with the Product Requirements Document (PRD), User Interface Design Document (UIDD), and Software Architecture Document (SAD).
 
 ---
 
@@ -19,7 +19,7 @@ Below is the updated Software Requirements Specification (SRS) document for the 
 
 ## State Management
 * **Frontend:**
-  * Local state managed using React’s `useState` and `useContext`
+  * Local state managed using React's `useState` and `useContext`
   * Remote data fetching and caching handled by SWR
 * No global state management libraries (e.g., Redux) implemented
 
@@ -83,22 +83,56 @@ Below is the updated Software Requirements Specification (SRS) document for the 
   * `POST /chat/query`: Submit natural language query, receive generative UI response
 
 ## Database Design ERD
-* **Tables:**
-  * `users` (id, google_id, first_name, last_name)
+* **Core Tables:**
+  * `users` (id, google_id, first_name, last_name, email)
+  * `user_settings` (id, user_id, primary_currency, language, theme, dashboard_layout)
   * `companies` (id, name, address, local_vat_id, eu_vat_id)
-  * `user_companies` (user_id, company_id, role) – Links users to companies with roles (e.g., owner)
-  * `bank_accounts` (id, company_id, iban, currency, name)
-  * `bank_statements` (id, bank_account_id, statement_id, sequence_number, creation_date, from_date, to_date, raw_data JSON)
-  * `transactions` (id, bank_statement_id, bank_account_id, amount, currency, credit_debit, status, booking_date, value_date, references JSON, related_parties JSON, remittance_info JSON)
-  * `documents` (id, company_id, file_path, upload_date, transaction_id, parsed_data JSON)
-* **Relationships:**
+  * `user_companies` (user_id, company_id, role) – Links users to companies with roles (e.g., owner, admin, user)
+
+* **Financial Tables:**
+  * `bank_accounts` (id, company_id, iban, currency, name, bank_name, current_balance, previous_balance)
+  * `bank_statements` (id, bank_account_id, statement_id, sequence_number, from_date, to_date, opening_balance, closing_balance, raw_data)
+  * `transactions` (id, bank_statement_id, bank_account_id, amount, currency, credit_debit, status, booking_date, value_date, references, related_parties, remittance_info, category_id, vendor_id, customer_id)
+  * `balance_history` (id, bank_account_id, date, balance, credited, debited, month, year)
+
+* **Document Management:**
+  * `documents` (id, company_id, filename, file_path, upload_date, transaction_id, parsed_data, status, type, document_version, previous_version_id)
+  * `vendors` (id, company_id, name, vat_id, contact_info)
+  * `customers` (id, company_id, name, vat_id, contact_info)
+
+* **Categorization and Analytics:**
+  * `categories` (id, company_id, name, description, type, color, is_system)
+  * `currency_rates` (id, base_currency, target_currency, rate, effective_date)
+
+* **User Experience:**
+  * `alerts` (id, company_id, type, message, account_id, document_id, resolved)
+  * `chat_messages` (id, user_id, message, response)
+
+* **Key Relationships:**
   * User ↔ UserCompany ↔ Company (many-to-many via junction table)
   * Company → BankAccount (one-to-many)
   * BankAccount → BankStatement (one-to-many)
   * BankStatement → Transaction (one-to-many)
   * Transaction ↔ Document (one-to-one, optional)
+  * Transaction → Category, Vendor, Customer (many-to-one)
+  * Document → Document (self-reference for versioning)
+
+* **Type Safety with Enums:**
+  * `UserRole` (OWNER, ADMIN, USER)
+  * `CreditDebit` (CREDIT, DEBIT)
+  * `TransactionStatus` (COMPLETED, PENDING, FAILED)
+  * `DocumentStatus` (PROCESSED, NEEDS_ATTENTION, UNDER_REVIEW)
+  * `DocumentType` (INVOICE, RECEIPT, CONTRACT, STATEMENT, OTHER)
+  * `AlertType` (GAP, REVIEW, BALANCE, SYSTEM)
+  * `CategoryType` (INCOME, EXPENSE, TRANSFER)
+
+* **Performance Optimizations:**
+  * Strategic indexes on frequently filtered fields (dates, names, foreign keys)
+  * Database-enforced unique constraints (e.g., bank account IBAN, company VAT ID)
+  * Cascade deletion for parent-child relationships
+  * JSON storage for flexible data (parsed documents, configurations)
 
 ---
 
-This SRS outlines the technical foundation for EBIZ-Saas, aligning with the PRD’s focus on financial management, the UIDD’s modern UI design, and the SAD’s lean architecture. It supports core features like bank statement parsing, transaction filtering, document linking, and a chat interface, providing a clear blueprint for development and future scalability. Let me know if refinements are needed!
+This SRS outlines the technical foundation for EBIZ-Saas, aligning with the PRD's focus on financial management, the UIDD's modern UI design, and the SAD's lean architecture. It supports core features like bank statement parsing, transaction filtering, document linking, and a chat interface, providing a clear blueprint for development and future scalability.
 
