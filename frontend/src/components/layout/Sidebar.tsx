@@ -11,6 +11,8 @@ import {
   PieChart,
 } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { UserAvatar } from '../ui/UserAvatar';
+import { useUser } from '../providers/user-provider';
 
 interface SidebarProps {
   className?: string;
@@ -19,6 +21,7 @@ interface SidebarProps {
 
 export function Sidebar({ className, collapsed = false }: SidebarProps) {
   const pathname = usePathname() || '';
+  const { user } = useUser();
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -65,13 +68,17 @@ export function Sidebar({ className, collapsed = false }: SidebarProps) {
       
       <div className="p-4 border-t dark:border-gray-700">
         <div className="flex items-center">
-          <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center mr-2">
-            <span className="text-gray-600 dark:text-white font-bold">U</span>
-          </div>
+          <UserAvatar 
+            profilePictureUrl={user?.profilePictureUrl}
+            firstName={user?.firstName}
+            lastName={user?.lastName}
+            size={collapsed ? "md" : "sm"}
+            className="mr-2"
+          />
           {!collapsed && (
             <div>
-              <p className="text-sm font-medium">User</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">user@ebiz.com</p>
+              <p className="text-sm font-medium">{user?.firstName} {user?.lastName}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">{user?.email}</p>
             </div>
           )}
         </div>

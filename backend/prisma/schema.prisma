@@ -11,18 +11,19 @@ datasource db {
 }
 
 model User {
-  id            String        @id @default(uuid())
-  googleId      String?       @unique
-  firstName     String
-  lastName      String
-  email         String        @unique
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  companies     UserCompany[]
-  settings      UserSettings?
-  chatHistory   ChatMessage[]
-  activityLogs  ActivityLog[]
-  createdTags   Tag[]         @relation("CreatedByUser")
+  id               String        @id @default(uuid())
+  googleId         String?       @unique
+  firstName        String
+  lastName         String
+  email            String        @unique
+  profilePictureUrl String?      // Google profile picture URL
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  companies        UserCompany[]
+  settings         UserSettings?
+  chatHistory      ChatMessage[]
+  activityLogs     ActivityLog[]
+  createdTags      Tag[]         @relation("CreatedByUser")
 
   @@map("users")
   @@index([email])
