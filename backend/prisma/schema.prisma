@@ -11,64 +11,70 @@ datasource db {
 }
 
 model User {
-  id        String        @id @default(uuid())
-  googleId  String?       @unique
-  firstName String
-  lastName  String
-  email     String        @unique
-  createdAt DateTime      @default(now())
-  updatedAt DateTime      @updatedAt
-  companies UserCompany[]
-  settings  UserSettings?
-  chatHistory ChatMessage[]
+  id            String        @id @default(uuid())
+  googleId      String?       @unique
+  firstName     String
+  lastName      String
+  email         String        @unique
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  companies     UserCompany[]
+  settings      UserSettings?
+  chatHistory   ChatMessage[]
+  activityLogs  ActivityLog[]
+  createdTags   Tag[]         @relation("CreatedByUser")
 
   @@map("users")
   @@index([email])
 }
 
 model UserSettings {
-  id            String  @id @default(uuid())
-  userId        String  @unique
-  primaryCurrency String @default("EUR")
-  language      String  @default("en")
-  theme         String  @default("light")
-  dashboardLayout Json?
-  notificationsEnabled Boolean @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                    String    @id @default(uuid())
+  userId                String    @unique
+  primaryCurrency       String    @default("EUR")
+  language              String    @default("en") // Default language (en, hr)
+  theme                 String    @default("light")
+  dashboardLayout       Json?
+  notificationsEnabled  Boolean   @default(true)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_settings")
 }
 
 model Company {
-  id          String        @id @default(uuid())
-  name        String
-  address     String
-  localVatId  String        @unique
-  euVatId     String?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  users       UserCompany[]
-  bankAccounts BankAccount[]
-  documents   Document[]
-  vendors     Vendor[]
-  customers   Customer[]
-  alerts      Alert[]
-  categories  Category[]
+  id            String          @id @default(uuid())
+  name          String
+  address       String
+  localVatId    String          @unique
+  euVatId       String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  users         UserCompany[]
+  bankAccounts  BankAccount[]
+  documents     Document[]
+  vendors       Vendor[]
+  customers     Customer[]
+  alerts        Alert[]
+  categories    Category[]
+  tags          Tag[]
+  translations  Translation[]
+  recurringTransactions RecurringTransaction[]
+  activityLogs  ActivityLog[]
 
   @@map("companies")
   @@index([name])
 }
 
 model UserCompany {
-  userId    String
-  companyId String
-  role      UserRole  @default(USER)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  company   Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userId        String
+  companyId     String
+  role          UserRole    @default(USER)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company       Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
   @@id([userId, companyId])
   @@map("user_companies")
@@ -83,22 +89,23 @@ enum UserRole {
 }
 
 model BankAccount {
-  id            String          @id @default(uuid())
-  companyId     String
-  iban          String          @unique
-  currency      String
-  name          String
-  bankName      String?
-  currentBalance Float          @default(0)
-  previousBalance Float         @default(0)
+  id                String          @id @default(uuid())
+  companyId         String
+  iban              String          @unique
+  currency          String
+  name              String
+  bankName          String?
+  currentBalance    Float           @default(0)
+  previousBalance   Float           @default(0)
   lastStatementDate DateTime?
-  totalStatements Int           @default(0)
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  company       Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  bankStatements BankStatement[]
-  transactions  Transaction[]
-  balanceHistory BalanceHistory[]
+  totalStatements   Int             @default(0)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  company           Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  bankStatements    BankStatement[]
+  transactions      Transaction[]
+  balanceHistory    BalanceHistory[]
+  recurringTransactions RecurringTransaction[]
 
   @@map("bank_accounts")
   @@index([companyId])
@@ -154,31 +161,78 @@ enum TransactionStatus {
   FAILED
 }
 
-model Transaction {
-  id              String           @id @default(uuid())
-  bankStatementId String
-  bankAccountId   String
+enum RecurrencePattern {
+  DAILY
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+  IRREGULAR
+}
+
+model RecurringTransaction {
+  id              String            @id @default(uuid())
+  companyId       String
+  bankAccountId   String?
+  name            String
+  description     String?
   amount          Float
   currency        String
-  creditDebit     CreditDebit
-  status          TransactionStatus @default(COMPLETED)
-  bookingDate     DateTime
-  valueDate       DateTime
-  references      Json
-  relatedParties  Json
-  remittanceInfo  Json
+  pattern         RecurrencePattern
+  startDate       DateTime
+  endDate         DateTime?
+  isActive        Boolean           @default(true)
+  lastDetectedAt  DateTime?
+  nextExpectedAt  DateTime?
+  matchCriteria   Json              // Criteria for matching (payee, description patterns)
   categoryId      String?
   vendorId        String?
   customerId      String?
-  notes           String?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  bankStatement   BankStatement    @relation(fields: [bankStatementId], references: [id], onDelete: Cascade)
-  bankAccount     BankAccount      @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
-  document        Document?
-  vendor          Vendor?          @relation(fields: [vendorId], references: [id])
-  customer        Customer?        @relation(fields: [customerId], references: [id])
-  category        Category?        @relation(fields: [categoryId], references: [id])
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  company         Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  bankAccount     BankAccount?      @relation(fields: [bankAccountId], references: [id])
+  category        Category?         @relation(fields: [categoryId], references: [id])
+  vendor          Vendor?           @relation(fields: [vendorId], references: [id])
+  customer        Customer?         @relation(fields: [customerId], references: [id])
+  transactions    Transaction[]
+
+  @@map("recurring_transactions")
+  @@index([companyId])
+  @@index([bankAccountId])
+  @@index([pattern])
+  @@index([nextExpectedAt])
+}
+
+model Transaction {
+  id                     String                @id @default(uuid())
+  bankStatementId        String
+  bankAccountId          String
+  amount                 Float
+  currency               String
+  creditDebit            CreditDebit
+  status                 TransactionStatus     @default(COMPLETED)
+  bookingDate            DateTime
+  valueDate              DateTime
+  references             Json
+  relatedParties         Json
+  remittanceInfo         Json
+  categoryId             String?
+  vendorId               String?
+  customerId             String?
+  recurringTransactionId String?
+  notes                  String?
+  createdAt              DateTime              @default(now())
+  updatedAt              DateTime              @updatedAt
+  bankStatement          BankStatement         @relation(fields: [bankStatementId], references: [id], onDelete: Cascade)
+  bankAccount            BankAccount           @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
+  document               Document?
+  vendor                 Vendor?               @relation(fields: [vendorId], references: [id])
+  customer               Customer?             @relation(fields: [customerId], references: [id])
+  category               Category?             @relation(fields: [categoryId], references: [id])
+  recurringTransaction   RecurringTransaction? @relation(fields: [recurringTransactionId], references: [id])
+  tags                   TransactionTag[]
 
   @@map("transactions")
   @@index([bankAccountId])
@@ -189,6 +243,37 @@ model Transaction {
   @@index([vendorId])
   @@index([customerId])
   @@index([categoryId])
+  @@index([recurringTransactionId])
+}
+
+model TransactionTag {
+  transactionId  String
+  tagId          String
+  createdAt      DateTime      @default(now())
+  transaction    Transaction   @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  tag            Tag           @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([transactionId, tagId])
+  @@map("transaction_tags")
+  @@index([transactionId])
+  @@index([tagId])
+}
+
+model Tag {
+  id             String           @id @default(uuid())
+  companyId      String
+  name           String
+  color          String?
+  createdById    String
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  company        Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdBy      User             @relation("CreatedByUser", fields: [createdById], references: [id])
+  transactions   TransactionTag[]
+
+  @@unique([companyId, name])
+  @@map("tags")
+  @@index([companyId])
 }
 
 enum CreditDebit {
@@ -210,25 +295,38 @@ enum DocumentType {
   OTHER
 }
 
+enum StorageProvider {
+  LOCAL
+  MINIO
+  S3
+  AZURE
+}
+
 model Document {
-  id             String         @id @default(uuid())
-  companyId      String
-  filename       String
-  filePath       String
-  uploadDate     DateTime
-  transactionId  String?        @unique
-  parsedData     Json
-  status         DocumentStatus @default(PROCESSED)
-  type           DocumentType?
-  documentVersion Int           @default(1)
-  previousVersionId String?     @unique
-  parsingError   Boolean        @default(false)
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
-  company        Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  transaction    Transaction?   @relation(fields: [transactionId], references: [id])
-  previousVersion Document?     @relation("DocumentVersions", fields: [previousVersionId], references: [id])
-  nextVersion    Document?      @relation("DocumentVersions")
+  id                 String         @id @default(uuid())
+  companyId          String
+  filename           String
+  filePath           String
+  originalFilename   String
+  mimeType           String
+  fileSize           Int            // Size in bytes
+  storageProvider    StorageProvider @default(LOCAL)
+  bucketName         String?        // For object storage (MinIO/S3)
+  objectKey          String?        // For object storage (MinIO/S3)
+  uploadDate         DateTime
+  transactionId      String?        @unique
+  parsedData         Json
+  status             DocumentStatus @default(PROCESSED)
+  type               DocumentType?
+  documentVersion    Int            @default(1)
+  previousVersionId  String?        @unique
+  parsingError       Boolean        @default(false)
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  company            Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  transaction        Transaction?   @relation(fields: [transactionId], references: [id])
+  previousVersion    Document?        @relation("DocumentVersions", fields: [previousVersionId], references: [id])
+  nextVersion        Document?        @relation("DocumentVersions")
 
   @@map("documents")
   @@index([companyId])
@@ -238,15 +336,16 @@ model Document {
 }
 
 model Vendor {
-  id           String       @id @default(uuid())
-  companyId    String
-  name         String
-  vatId        String?
-  contactInfo  Json?
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  company      Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  transactions Transaction[]
+  id                   String                @id @default(uuid())
+  companyId            String
+  name                 String
+  vatId                String?
+  contactInfo          Json?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  company              Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  transactions         Transaction[]
+  recurringTransactions RecurringTransaction[]
 
   @@unique([companyId, name])
   @@map("vendors")
@@ -255,15 +354,16 @@ model Vendor {
 }
 
 model Customer {
-  id           String       @id @default(uuid())
-  companyId    String
-  name         String
-  vatId        String?
-  contactInfo  Json?
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
-  company      Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  transactions Transaction[]
+  id                   String                @id @default(uuid())
+  companyId            String
+  name                 String
+  vatId                String?
+  contactInfo          Json?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  company              Company               @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  transactions         Transaction[]
+  recurringTransactions RecurringTransaction[]
 
   @@unique([companyId, name])
   @@map("customers")
@@ -297,13 +397,13 @@ model Alert {
 }
 
 model CurrencyRate {
-  id           String     @id @default(uuid())
-  baseCurrency String
+  id             String     @id @default(uuid())
+  baseCurrency   String
   targetCurrency String
-  rate         Float
-  effectiveDate DateTime
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  rate           Float
+  effectiveDate  DateTime
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
 
   @@unique([baseCurrency, targetCurrency, effectiveDate])
   @@map("currency_rates")
@@ -318,17 +418,18 @@ enum CategoryType {
 }
 
 model Category {
-  id          String       @id @default(uuid())
-  companyId   String?
-  name        String
-  description String?
-  type        CategoryType
-  color       String?
-  isSystem    Boolean      @default(false)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  company     Company?     @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  transactions Transaction[]
+  id                   String                @id @default(uuid())
+  companyId            String?
+  name                 String
+  description          String?
+  type                 CategoryType
+  color                String?
+  isSystem             Boolean               @default(false)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  company              Company?              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  transactions         Transaction[]
+  recurringTransactions RecurringTransaction[]
 
   @@unique([companyId, name])
   @@map("categories")
@@ -346,4 +447,47 @@ model ChatMessage {
 
   @@map("chat_messages")
   @@index([userId])
+}
+
+// Multi-language support
+model Translation {
+  id          String    @id @default(uuid())
+  companyId   String
+  entityType  String    // The type of entity (e.g., "category", "vendor")
+  entityId    String    // The ID of the entity being translated
+  field       String    // The field being translated (e.g., "name", "description")
+  language    String    // Language code (e.g., "en", "hr")
+  text        String    // Translated text
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  company     Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([entityType, entityId, field, language])
+  @@map("translations")
+  @@index([companyId])
+  @@index([entityType, entityId])
+  @@index([language])
+}
+
+// Audit logging for tracking changes to sensitive data
+// Future implementation can be expanded to event sourcing pattern
+model ActivityLog {
+  id          String    @id @default(uuid())
+  userId      String
+  companyId   String
+  entityType  String    // The type of entity (e.g., "transaction", "document")
+  entityId    String    // The ID of the entity being modified
+  action      String    // The action performed (e.g., "create", "update", "delete")
+  details     Json      // Details of the changes made
+  ipAddress   String?   // IP address of the user
+  userAgent   String?   // User agent of the browser/client
+  createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id])
+  company     Company   @relation(fields: [companyId], references: [id])
+
+  @@map("activity_logs")
+  @@index([userId])
+  @@index([companyId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
 } 

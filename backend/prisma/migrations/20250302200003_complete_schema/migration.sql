@@ -5,6 +5,9 @@ CREATE TYPE "UserRole" AS ENUM ('OWNER', 'ADMIN', 'USER');
 CREATE TYPE "TransactionStatus" AS ENUM ('COMPLETED', 'PENDING', 'FAILED');
 
 -- CreateEnum
+CREATE TYPE "RecurrencePattern" AS ENUM ('DAILY', 'WEEKLY', 'BIWEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY', 'IRREGULAR');
+
+-- CreateEnum
 CREATE TYPE "CreditDebit" AS ENUM ('CREDIT', 'DEBIT');
 
 -- CreateEnum
@@ -12,6 +15,9 @@ CREATE TYPE "DocumentStatus" AS ENUM ('PROCESSED', 'NEEDS_ATTENTION', 'UNDER_REV
 
 -- CreateEnum
 CREATE TYPE "DocumentType" AS ENUM ('INVOICE', 'RECEIPT', 'CONTRACT', 'STATEMENT', 'OTHER');
+
+-- CreateEnum
+CREATE TYPE "StorageProvider" AS ENUM ('LOCAL', 'MINIO', 'S3', 'AZURE');
 
 -- CreateEnum
 CREATE TYPE "AlertType" AS ENUM ('GAP', 'REVIEW', 'BALANCE', 'SYSTEM');
@@ -126,6 +132,31 @@ CREATE TABLE "bank_statements" (
 );
 
 -- CreateTable
+CREATE TABLE "recurring_transactions" (
+    "id" TEXT NOT NULL,
+    "companyId" TEXT NOT NULL,
+    "bankAccountId" TEXT,
+    "name" TEXT NOT NULL,
+    "description" TEXT,
+    "amount" DOUBLE PRECISION NOT NULL,
+    "currency" TEXT NOT NULL,
+    "pattern" "RecurrencePattern" NOT NULL,
+    "startDate" TIMESTAMP(3) NOT NULL,
+    "endDate" TIMESTAMP(3),
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "lastDetectedAt" TIMESTAMP(3),
+    "nextExpectedAt" TIMESTAMP(3),
+    "matchCriteria" JSONB NOT NULL,
+    "categoryId" TEXT,
+    "vendorId" TEXT,
+    "customerId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "recurring_transactions_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "transactions" (
     "id" TEXT NOT NULL,
     "bankStatementId" TEXT NOT NULL,
@@ -142,6 +173,7 @@ CREATE TABLE "transactions" (
     "categoryId" TEXT,
     "vendorId" TEXT,
     "customerId" TEXT,
+    "recurringTransactionId" TEXT,
     "notes" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -150,11 +182,39 @@ CREATE TABLE "transactions" (
 );
 
 -- CreateTable
+CREATE TABLE "transaction_tags" (
+    "transactionId" TEXT NOT NULL,
+    "tagId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "transaction_tags_pkey" PRIMARY KEY ("transactionId","tagId")
+);
+
+-- CreateTable
+CREATE TABLE "tags" (
+    "id" TEXT NOT NULL,
+    "companyId" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "color" TEXT,
+    "createdById" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "tags_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "documents" (
     "id" TEXT NOT NULL,
     "companyId" TEXT NOT NULL,
     "filename" TEXT NOT NULL,
     "filePath" TEXT NOT NULL,
+    "originalFilename" TEXT NOT NULL,
+    "mimeType" TEXT NOT NULL,
+    "fileSize" INTEGER NOT NULL,
+    "storageProvider" "StorageProvider" NOT NULL DEFAULT 'LOCAL',
+    "bucketName" TEXT,
+    "objectKey" TEXT,
     "uploadDate" TIMESTAMP(3) NOT NULL,
     "transactionId" TEXT,
     "parsedData" JSONB NOT NULL,
@@ -249,6 +309,37 @@ CREATE TABLE "chat_messages" (
     CONSTRAINT "chat_messages_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "translations" (
+    "id" TEXT NOT NULL,
+    "companyId" TEXT NOT NULL,
+    "entityType" TEXT NOT NULL,
+    "entityId" TEXT NOT NULL,
+    "field" TEXT NOT NULL,
+    "language" TEXT NOT NULL,
+    "text" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "translations_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "activity_logs" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "companyId" TEXT NOT NULL,
+    "entityType" TEXT NOT NULL,
+    "entityId" TEXT NOT NULL,
+    "action" TEXT NOT NULL,
+    "details" JSONB NOT NULL,
+    "ipAddress" TEXT,
+    "userAgent" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "activity_logs_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "users_googleId_key" ON "users"("googleId");
 
@@ -301,6 +392,18 @@ CREATE INDEX "bank_statements_fromDate_toDate_idx" ON "bank_statements"("fromDat
 CREATE UNIQUE INDEX "bank_statements_bankAccountId_statementId_key" ON "bank_statements"("bankAccountId", "statementId");
 
 -- CreateIndex
+CREATE INDEX "recurring_transactions_companyId_idx" ON "recurring_transactions"("companyId");
+
+-- CreateIndex
+CREATE INDEX "recurring_transactions_bankAccountId_idx" ON "recurring_transactions"("bankAccountId");
+
+-- CreateIndex
+CREATE INDEX "recurring_transactions_pattern_idx" ON "recurring_transactions"("pattern");
+
+-- CreateIndex
+CREATE INDEX "recurring_transactions_nextExpectedAt_idx" ON "recurring_transactions"("nextExpectedAt");
+
+-- CreateIndex
 CREATE INDEX "transactions_bankAccountId_idx" ON "transactions"("bankAccountId");
 
 -- CreateIndex
@@ -323,6 +426,21 @@ CREATE INDEX "transactions_customerId_idx" ON "transactions"("customerId");
 
 -- CreateIndex
 CREATE INDEX "transactions_categoryId_idx" ON "transactions"("categoryId");
+
+-- CreateIndex
+CREATE INDEX "transactions_recurringTransactionId_idx" ON "transactions"("recurringTransactionId");
+
+-- CreateIndex
+CREATE INDEX "transaction_tags_transactionId_idx" ON "transaction_tags"("transactionId");
+
+-- CreateIndex
+CREATE INDEX "transaction_tags_tagId_idx" ON "transaction_tags"("tagId");
+
+-- CreateIndex
+CREATE INDEX "tags_companyId_idx" ON "tags"("companyId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "tags_companyId_name_key" ON "tags"("companyId", "name");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "documents_transactionId_key" ON "documents"("transactionId");
@@ -390,6 +508,30 @@ CREATE UNIQUE INDEX "categories_companyId_name_key" ON "categories"("companyId",
 -- CreateIndex
 CREATE INDEX "chat_messages_userId_idx" ON "chat_messages"("userId");
 
+-- CreateIndex
+CREATE INDEX "translations_companyId_idx" ON "translations"("companyId");
+
+-- CreateIndex
+CREATE INDEX "translations_entityType_entityId_idx" ON "translations"("entityType", "entityId");
+
+-- CreateIndex
+CREATE INDEX "translations_language_idx" ON "translations"("language");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "translations_entityType_entityId_field_language_key" ON "translations"("entityType", "entityId", "field", "language");
+
+-- CreateIndex
+CREATE INDEX "activity_logs_userId_idx" ON "activity_logs"("userId");
+
+-- CreateIndex
+CREATE INDEX "activity_logs_companyId_idx" ON "activity_logs"("companyId");
+
+-- CreateIndex
+CREATE INDEX "activity_logs_entityType_entityId_idx" ON "activity_logs"("entityType", "entityId");
+
+-- CreateIndex
+CREATE INDEX "activity_logs_createdAt_idx" ON "activity_logs"("createdAt");
+
 -- AddForeignKey
 ALTER TABLE "user_settings" ADD CONSTRAINT "user_settings_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -409,6 +551,21 @@ ALTER TABLE "balance_history" ADD CONSTRAINT "balance_history_bankAccountId_fkey
 ALTER TABLE "bank_statements" ADD CONSTRAINT "bank_statements_bankAccountId_fkey" FOREIGN KEY ("bankAccountId") REFERENCES "bank_accounts"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "recurring_transactions" ADD CONSTRAINT "recurring_transactions_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "companies"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "recurring_transactions" ADD CONSTRAINT "recurring_transactions_bankAccountId_fkey" FOREIGN KEY ("bankAccountId") REFERENCES "bank_accounts"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "recurring_transactions" ADD CONSTRAINT "recurring_transactions_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "categories"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "recurring_transactions" ADD CONSTRAINT "recurring_transactions_vendorId_fkey" FOREIGN KEY ("vendorId") REFERENCES "vendors"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "recurring_transactions" ADD CONSTRAINT "recurring_transactions_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "customers"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "transactions" ADD CONSTRAINT "transactions_bankStatementId_fkey" FOREIGN KEY ("bankStatementId") REFERENCES "bank_statements"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -422,6 +579,21 @@ ALTER TABLE "transactions" ADD CONSTRAINT "transactions_customerId_fkey" FOREIGN
 
 -- AddForeignKey
 ALTER TABLE "transactions" ADD CONSTRAINT "transactions_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "categories"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "transactions" ADD CONSTRAINT "transactions_recurringTransactionId_fkey" FOREIGN KEY ("recurringTransactionId") REFERENCES "recurring_transactions"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "transaction_tags" ADD CONSTRAINT "transaction_tags_transactionId_fkey" FOREIGN KEY ("transactionId") REFERENCES "transactions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "transaction_tags" ADD CONSTRAINT "transaction_tags_tagId_fkey" FOREIGN KEY ("tagId") REFERENCES "tags"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "tags" ADD CONSTRAINT "tags_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "companies"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "tags" ADD CONSTRAINT "tags_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "documents" ADD CONSTRAINT "documents_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "companies"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -446,3 +618,12 @@ ALTER TABLE "categories" ADD CONSTRAINT "categories_companyId_fkey" FOREIGN KEY 
 
 -- AddForeignKey
 ALTER TABLE "chat_messages" ADD CONSTRAINT "chat_messages_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "translations" ADD CONSTRAINT "translations_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "companies"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "activity_logs" ADD CONSTRAINT "activity_logs_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "activity_logs" ADD CONSTRAINT "activity_logs_companyId_fkey" FOREIGN KEY ("companyId") REFERENCES "companies"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
