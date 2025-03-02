@@ -3,6 +3,32 @@
 All notable changes to the EBIZ-Saas Platform project will be documented in this file.
 
 ## [Unreleased]
+### 2025-03-02
+
+### Added
+- Comprehensive suite of Gherkin feature files for end-to-end testing, covering:
+  - User authentication and onboarding
+  - Bank statement management
+  - Transaction management
+  - Document management
+  - Chat interface functionality
+  - Dashboard overview
+  - Bank account management
+  - User and system settings
+  - Navigation and UI elements
+- Feature files written using BDD approach to serve as executable specifications
+- Enhanced database integration scenarios with explicit database field validations
+- Error handling scenarios for network issues and data validation failures
+- Multi-currency support across financial features
+- Accessibility testing scenarios including keyboard navigation and screen reader support
+- Improved test data examples with realistic values matching database schema
+
+### Changed
+- Enhanced the e2e test framework with structured feature organization
+- Improved test coverage with detailed scenarios for all core app features
+
+## [Unreleased]
+### 2025-03-02   
 
 ### Added
 - Initial project setup with npm workspaces monorepo structure
