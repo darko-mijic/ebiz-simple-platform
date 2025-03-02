@@ -142,3 +142,54 @@ npx shadcn-ui@latest add dialog
 ```
 
 Remember to check the [shadcn/ui documentation](https://ui.shadcn.com/docs) for more details on available components. 
+
+
+## Bash commands
+
+### Share the Diff via Copy-Paste
+Run this in your terminal:
+
+git diff --staged > changes.diff && git diff >> changes.diff
+git ls-files --others --exclude-standard | xargs -I {} git diff --no-index /dev/null {} >> changes.diff
+cat changes.diff | pbcopy
+
+What it does:
+	1.	git diff --staged → Adds staged changes.
+	2.	git diff → Adds unstaged changes.
+	3.	git ls-files --others --exclude-standard → Lists untracked files.
+	4.	git diff --no-index /dev/null {} → Appends content of untracked files.
+	5.	pbcopy → Copies the result to clipboard.
+
+Now, just paste it wherever needed. 🚀
+
+```bash
+git diff --staged > changes.diff && git diff >> changes.diff
+git ls-files --others --exclude-standard | xargs -I {} git diff --no-index /dev/null {} >> changes.diff
+cat changes.diff | pbcopy
+```
+
+## Bash Script: Reset Git Working Directory
+
+```bash
+# Remove all untracked files and directories
+git clean -df
+
+# Restore all modified and deleted files to the last committed state
+git restore .
+```
+What it does:
+	•	git clean -df → Deletes all untracked files and directories.
+	•	git restore . → Reverts all modified and deleted files to their last committed state.
+
+
+## Bash One-Liner to Reset Git Working Directory
+
+```bash
+git clean -df && git restore .
+```
+
+What it does:
+	•	git clean -df → Deletes all untracked files and directories.
+	•	git restore . → Reverts all modified and deleted files to their last committed state.
+
+This completely resets your working directory without affecting committed changes. 🚀

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EBIZ-Saas Platform Extension Test</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      line-height: 1.6;
+    }
+    h1 {
+      color: #2563eb;
+      border-bottom: 2px solid #e5e7eb;
+      padding-bottom: 10px;
+    }
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+      background-color: #f9fafb;
+    }
+    .success {
+      background-color: #d1fae5;
+      border-color: #a7f3d0;
+    }
+    .error {
+      background-color: #fee2e2;
+      border-color: #fecaca;
+    }
+    button {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    button:hover {
+      background-color: #1d4ed8;
+    }
+    code {
+      background-color: #e5e7eb;
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-family: monospace;
+    }
+    #icon-display {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin: 20px 0;
+    }
+    .icon-box {
+      text-align: center;
+    }
+    .icon-box img {
+      border: 1px solid #e5e7eb;
+      padding: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>EBIZ-Saas Platform Extension Test</h1>
+  
+  <div class="card">
+    <h2>Extension Status</h2>
+    <div id="extension-status">
+      Checking extension status...
+    </div>
+    <button id="check-status">Check Status</button>
+  </div>
+
+  <div class="card">
+    <h2>Icon Test</h2>
+    <p>The following icons should be loaded correctly:</p>
+    <div id="icon-display">
+      <div class="icon-box">
+        <p>Dark 16px</p>
+        <img src="icon-fixed/dark/16.png" alt="Dark 16px icon" width="16" height="16">
+      </div>
+      <div class="icon-box">
+        <p>Dark 32px</p>
+        <img src="icon-fixed/dark/32.png" alt="Dark 32px icon" width="32" height="32">
+      </div>
+      <div class="icon-box">
+        <p>Light 16px</p>
+        <img src="icon-fixed/light/16.png" alt="Light 16px icon" width="16" height="16">
+      </div>
+      <div class="icon-box">
+        <p>Light 32px</p>
+        <img src="icon-fixed/light/32.png" alt="Light 32px icon" width="32" height="32">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Troubleshooting</h2>
+    <p>If you're seeing this page, the HTML file loaded correctly. If icons are not displaying, check:</p>
+    <ul>
+      <li>Icon paths in your manifest.json file</li>
+      <li>Whether icon files exist in the correct locations</li>
+      <li>Browser console for any error messages</li>
+    </ul>
+    <p>For more detailed troubleshooting, refer to the <code>EXTENSION_README.md</code> file.</p>
+  </div>
+
+  <script>
+    document.getElementById('check-status').addEventListener('click', function() {
+      const statusElement = document.getElementById('extension-status');
+      
+      // Check if we're in a Chrome extension context
+      if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+        statusElement.textContent = "Chrome extension API detected. Checking communication...";
+        
+        try {
+          chrome.runtime.sendMessage({ action: "getStatus" }, function(response) {
+            if (chrome.runtime.lastError) {
+              statusElement.textContent = "Error: " + chrome.runtime.lastError.message;
+              statusElement.parentElement.classList.add('error');
+              statusElement.parentElement.classList.remove('success');
+            } else if (response && response.status) {
+              statusElement.textContent = "✅ Extension is working correctly: " + response.status;
+              statusElement.parentElement.classList.add('success');
+              statusElement.parentElement.classList.remove('error');
+            } else {
+              statusElement.textContent = "⚠️ Extension responded but returned unexpected data";
+              statusElement.parentElement.classList.add('error');
+              statusElement.parentElement.classList.remove('success');
+            }
+          });
+        } catch (error) {
+          statusElement.textContent = "Error: " + error.message;
+          statusElement.parentElement.classList.add('error');
+          statusElement.parentElement.classList.remove('success');
+        }
+      } else {
+        statusElement.textContent = "❌ Not running in a Chrome extension context";
+        statusElement.parentElement.classList.add('error');
+        statusElement.parentElement.classList.remove('success');
+      }
+    });
+  </script>
+</body>
+</html> 
