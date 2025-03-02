@@ -1,0 +1,145 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<Document xmlns="urn:iso:std:iso:20022:tech:xsd:camt.053.001.08" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:iso:std:iso:20022:tech:xsd:camt.053.001.08 ./camt.053.001.08.xsd">
+  <BkToCstmrStmt>
+    <GrpHdr>
+      <MsgId>BCS23732108701202501106626</MsgId>
+      <CreDtTm>2025-01-10T04:10:11.769</CreDtTm>
+    </GrpHdr>
+    <Stmt>
+      <Id>192012188</Id>
+      <LglSeqNb>3</LglSeqNb>
+      <CreDtTm>2025-01-10T04:10:11.770</CreDtTm>
+      <FrToDt>
+        <FrDtTm>2025-01-09T00:00:00.000</FrDtTm>
+        <ToDtTm>2025-01-09T23:59:59.999</ToDtTm>
+      </FrToDt>
+      <RptgSrc>
+        <Prtry>ZABAHR2XXXX92963223473</Prtry>
+      </RptgSrc>
+      <Acct>
+        <Id>
+          <IBAN>HR2423600001102568092</IBAN>
+        </Id>
+        <Ccy>EUR</Ccy>
+        <Nm>redovan račun vrste 11</Nm>
+        <Ownr>
+          <Nm>EBIZ D.O.O.</Nm>
+          <PstlAdr>
+            <AdrLine>ZAGREB</AdrLine>
+            <AdrLine>PRISAVLJE 10</AdrLine>
+          </PstlAdr>
+          <Id>
+            <OrgId>
+              <Othr>
+                <Id>23732108701</Id>
+              </Othr>
+            </OrgId>
+          </Id>
+        </Ownr>
+      </Acct>
+      <Bal>
+        <Tp>
+          <CdOrPrtry>
+            <Cd>OPBD</Cd>
+          </CdOrPrtry>
+        </Tp>
+        <Amt Ccy="EUR">1393.87</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Dt>
+          <Dt>2025-01-09</Dt>
+        </Dt>
+      </Bal>
+      <Bal>
+        <Tp>
+          <CdOrPrtry>
+            <Cd>CLBD</Cd>
+          </CdOrPrtry>
+        </Tp>
+        <Amt Ccy="EUR">41393.87</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <Dt>
+          <Dt>2025-01-09</Dt>
+        </Dt>
+      </Bal>
+      <TxsSummry>
+        <TtlCdtNtries>
+          <NbOfNtries>1</NbOfNtries>
+          <Sum>40000.00</Sum>
+        </TtlCdtNtries>
+        <TtlDbtNtries>
+          <NbOfNtries>0</NbOfNtries>
+          <Sum>0.00</Sum>
+        </TtlDbtNtries>
+      </TxsSummry>
+      <Ntry>
+        <Amt Ccy="EUR">40000.00</Amt>
+        <CdtDbtInd>CRDT</CdtDbtInd>
+        <RvslInd>false</RvslInd>
+        <Sts>
+          <Cd>BOOK</Cd>
+        </Sts>
+        <BookgDt>
+          <DtTm>2025-01-09T14:37:26.810</DtTm>
+        </BookgDt>
+        <ValDt>
+          <Dt>2025-01-09</Dt>
+        </ValDt>
+        <AcctSvcrRef>0129021270001526   1701</AcctSvcrRef>
+        <BkTxCd>
+          <Domn>
+            <Cd>PMNT</Cd>
+            <Fmly>
+              <Cd>RCDT</Cd>
+              <SubFmlyCd>DMCT</SubFmlyCd>
+            </Fmly>
+          </Domn>
+        </BkTxCd>
+        <NtryDtls>
+          <TxDtls>
+            <Refs>
+              <MsgId>2360000250109083001C3351008</MsgId>
+              <AcctSvcrRef>N020250090199480</AcctSvcrRef>
+              <InstrId>2360000250109083001C335100801526B3</InstrId>
+              <EndToEndId>HR99</EndToEndId>
+            </Refs>
+            <AmtDtls>
+              <TxAmt>
+                <Amt Ccy="EUR">40000.00</Amt>
+              </TxAmt>
+            </AmtDtls>
+            <RltdPties>
+              <Dbtr>
+                <Pty>
+                  <Nm>THESPIAN d.o.o. za računalno programiranje i usluge</Nm>
+                  <PstlAdr>
+                    <Ctry>HR</Ctry>
+                    <AdrLine>ZADARSKA ULICA 80</AdrLine>
+                    <AdrLine>10000 - ZAGREB</AdrLine>
+                  </PstlAdr>
+                </Pty>
+              </Dbtr>
+              <DbtrAcct>
+                <Id>
+                  <IBAN>HR7024020061100728869</IBAN>
+                </Id>
+              </DbtrAcct>
+            </RltdPties>
+            <RmtInf>
+              <Strd>
+                <CdtrRefInf>
+                  <Tp>
+                    <CdOrPrtry>
+                      <Cd>SCOR</Cd>
+                    </CdOrPrtry>
+                  </Tp>
+                  <Ref>HR0009-01-2025</Ref>
+                </CdtrRefInf>
+                <AddtlRmtInf>Isplata prema Ugovoru o beskamatnomnovčanom zajmu od 09.01.2025.</AddtlRmtInf>
+              </Strd>
+            </RmtInf>
+          </TxDtls>
+        </NtryDtls>
+      </Ntry>
+    </Stmt>
+  </BkToCstmrStmt>
+</Document>

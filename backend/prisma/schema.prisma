@@ -1,0 +1,133 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String        @id @default(uuid())
+  googleId  String?       @unique
+  firstName String
+  lastName  String
+  email     String        @unique
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  companies UserCompany[]
+
+  @@map("users")
+}
+
+model Company {
+  id          String        @id @default(uuid())
+  name        String
+  address     String
+  localVatId  String        @unique
+  euVatId     String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  users       UserCompany[]
+  bankAccounts BankAccount[]
+  documents   Document[]
+
+  @@map("companies")
+}
+
+model UserCompany {
+  userId    String
+  companyId String
+  role      UserRole  @default(USER)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company   Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@id([userId, companyId])
+  @@map("user_companies")
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  USER
+}
+
+model BankAccount {
+  id            String          @id @default(uuid())
+  companyId     String
+  iban          String          @unique
+  currency      String
+  name          String
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  company       Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  bankStatements BankStatement[]
+  transactions  Transaction[]
+
+  @@map("bank_accounts")
+}
+
+model BankStatement {
+  id             String        @id @default(uuid())
+  bankAccountId  String
+  statementId    String
+  sequenceNumber Int
+  creationDate   DateTime
+  fromDate       DateTime
+  toDate         DateTime
+  rawData        Json
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  bankAccount    BankAccount   @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
+  transactions   Transaction[]
+
+  @@unique([bankAccountId, statementId])
+  @@map("bank_statements")
+}
+
+model Transaction {
+  id              String        @id @default(uuid())
+  bankStatementId String
+  bankAccountId   String
+  amount          Float
+  currency        String
+  creditDebit     CreditDebit
+  status          String
+  bookingDate     DateTime
+  valueDate       DateTime
+  references      Json
+  relatedParties  Json
+  remittanceInfo  Json
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  bankStatement   BankStatement @relation(fields: [bankStatementId], references: [id], onDelete: Cascade)
+  bankAccount     BankAccount   @relation(fields: [bankAccountId], references: [id], onDelete: Cascade)
+  document        Document?
+
+  @@map("transactions")
+}
+
+enum CreditDebit {
+  CREDIT
+  DEBIT
+}
+
+model Document {
+  id           String      @id @default(uuid())
+  companyId    String
+  filePath     String
+  uploadDate   DateTime
+  transactionId String?     @unique
+  parsedData   Json
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  company      Company     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  transaction  Transaction? @relation(fields: [transactionId], references: [id])
+
+  @@map("documents")
+} 
