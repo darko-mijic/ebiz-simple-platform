@@ -42,11 +42,32 @@ Below is the updated Software Requirements Specification (SRS) document for the 
 * **Databases:**
   * PostgreSQL (relational data)
   * Qdrant (vector database)
+  * MinIO (S3-compatible document storage)
 * **Development Tools:**
   * Docker (local database containers)
   * Playwright (end-to-end testing)
 * **Authentication:**
   * Google OAuth2 with JWT tokens
+
+## CAMT Parser Integration
+* **Parser Module:** Located in `src/utils/camt-parser-adapter.ts`
+* **Purpose:** Transforms ISO 20022 CAMT.053 bank statement data to match database schema
+* **Key Features:**
+  * Parses XML bank statements from EU financial institutions
+  * Maps standardized fields to database models
+  * Extracts balance information (opening, closing, intermediate)
+  * Processes detailed transaction data with references and remittance information
+  * Preserves original data while providing structured database records
+  * Includes robust type handling with TypeScript interfaces
+* **Type Safety:**
+  * Dedicated interfaces for all CAMT data structures
+  * Safe property access with deep object traversal
+  * Proper handling of optional and nullable fields
+  * Type conversion between string and numeric values
+* **Integration Points:**
+  * Used by bank statement upload endpoint
+  * Feeds transaction and balance history tables
+  * Enables reconciliation with document uploads
 
 ## Authentication Process
 * Users authenticate via Google Single Sign-On (SSO)
@@ -91,18 +112,22 @@ Below is the updated Software Requirements Specification (SRS) document for the 
 
 * **Financial Tables:**
   * `bank_accounts` (id, company_id, iban, currency, name, bank_name, current_balance, previous_balance)
-  * `bank_statements` (id, bank_account_id, statement_id, sequence_number, from_date, to_date, opening_balance, closing_balance, raw_data)
-  * `transactions` (id, bank_statement_id, bank_account_id, amount, currency, credit_debit, status, booking_date, value_date, references, related_parties, remittance_info, category_id, vendor_id, customer_id)
-  * `balance_history` (id, bank_account_id, date, balance, credited, debited, month, year)
+  * `bank_statements` (id, bank_account_id, statement_id, sequence_number, from_date, to_date, opening_balance, closing_balance, raw_data, message_id, reporting_source, legal_sequence_number, total_credit_entries, total_credit_amount, total_debit_entries, total_debit_amount)
+  * `transactions` (id, bank_statement_id, bank_account_id, amount, currency, credit_debit, status, booking_date, value_date, account_servicer_ref, end_to_end_id, references, related_parties, remittance_info, bank_transaction_code, bank_transaction_family, bank_transaction_sub_family, structured_reference, reference_type, additional_remittance_info, category_id, vendor_id, customer_id, tag_ids)
+  * `recurring_transactions` (id, company_id, pattern_name, pattern_description, matching_criteria, recurrence_type, frequency, next_expected_date)
+  * `transaction_tags` (transaction_id, tag_id)
+  * `tags` (id, company_id, name, color)
+  * `balance_history` (id, bank_account_id, date, balance, credited, debited, month, year, balance_type, credit_debit)
 
 * **Document Management:**
-  * `documents` (id, company_id, filename, file_path, upload_date, transaction_id, parsed_data, status, type, document_version, previous_version_id)
+  * `documents` (id, company_id, filename, file_path, object_key, bucket_name, upload_date, transaction_id, parsed_data, status, type, document_version, previous_version_id, size_bytes, mime_type)
   * `vendors` (id, company_id, name, vat_id, contact_info)
   * `customers` (id, company_id, name, vat_id, contact_info)
 
 * **Categorization and Analytics:**
   * `categories` (id, company_id, name, description, type, color, is_system)
   * `currency_rates` (id, base_currency, target_currency, rate, effective_date)
+  * `translations` (id, entity_type, entity_id, field, language, text)
 
 * **User Experience:**
   * `alerts` (id, company_id, type, message, account_id, document_id, resolved)
@@ -115,16 +140,20 @@ Below is the updated Software Requirements Specification (SRS) document for the 
   * BankStatement → Transaction (one-to-many)
   * Transaction ↔ Document (one-to-one, optional)
   * Transaction → Category, Vendor, Customer (many-to-one)
+  * Transaction ↔ Tags (many-to-many via transaction_tags)
+  * Transaction → RecurringTransaction (many-to-one, optional)
   * Document → Document (self-reference for versioning)
 
 * **Type Safety with Enums:**
   * `UserRole` (OWNER, ADMIN, USER)
   * `CreditDebit` (CREDIT, DEBIT)
-  * `TransactionStatus` (COMPLETED, PENDING, FAILED)
+  * `TransactionStatus` (COMPLETED, PENDING, FAILED, BOOKED, INFORMATION, REJECTED)
   * `DocumentStatus` (PROCESSED, NEEDS_ATTENTION, UNDER_REVIEW)
   * `DocumentType` (INVOICE, RECEIPT, CONTRACT, STATEMENT, OTHER)
   * `AlertType` (GAP, REVIEW, BALANCE, SYSTEM)
   * `CategoryType` (INCOME, EXPENSE, TRANSFER)
+  * `BalanceType` (OPBD, CLBD, ITBD, PRCD, FWAV, CLAV)
+  * `RecurrenceType` (DAILY, WEEKLY, MONTHLY, QUARTERLY, ANNUAL)
 
 * **Performance Optimizations:**
   * Strategic indexes on frequently filtered fields (dates, names, foreign keys)

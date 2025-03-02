@@ -10,6 +10,7 @@ This is the backend service for EBIZ-Saas, a financial management platform for s
 - **AI Integration**: LangChain.js
 - **Vector Database**: Qdrant for AI features
 - **Bank Statements**: ISO 20022 CAMT.053 parser
+- **Storage**: MinIO S3-compatible object storage
 
 ## Getting Started
 
@@ -101,6 +102,13 @@ The application includes support for ISO 20022 CAMT.053 bank statement files:
   - Supports transaction reconciliation
   - Preserves original data while providing structured access
 
+- **Type Safety Improvements**:
+  - Comprehensive TypeScript interfaces for all CAMT structures
+  - Safe property access utilities for deeply nested objects
+  - Proper handling of optional and nullable fields
+  - Type conversion between string and numeric values
+  - Error handling for malformed data
+
 To use the CAMT parser:
 
 ```typescript
@@ -110,6 +118,18 @@ import { processCamtFile } from './utils/camt-parser-adapter';
 const xmlContent = fs.readFileSync('bank-statement.xml', 'utf8');
 const bankAccountId = 'your-bank-account-id';
 const result = await processCamtFile(xmlContent, bankAccountId);
+
+// Working with transactions
+const transactions = result[0].transactions;
+for (const tx of transactions) {
+  console.log(`Amount: ${tx.amount} ${tx.currency}`);
+  console.log(`Reference: ${tx.endToEndId}`);
+  console.log(`Structured Ref: ${tx.structuredReference}`);
+  
+  // Type-safe access to complex nested properties
+  const creditorName = tx.relatedParties.creditor?.name;
+  const creditorIban = tx.relatedParties.creditorAccount?.iban;
+}
 ```
 
 ## API Documentation
