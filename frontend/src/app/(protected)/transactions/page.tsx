@@ -1,12 +1,21 @@
 "use client";
 
+import { useEffect } from 'react';
 import { Button } from "../../../components/ui/button";
 import { Card } from "../../../components/ui/card";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "../../../components/ui/table";
 import { ArrowDownIcon, ArrowUpIcon, Download, Filter, Search } from "lucide-react";
 import { Input } from "../../../components/ui/input";
+import { setAuthCookie } from "../../../lib/set-auth-cookie";
 
 export default function TransactionsPage() {
+  // Set auth cookie for development testing
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      setAuthCookie();
+    }
+  }, []);
+
   // Mock data
   const transactions = [
     {
