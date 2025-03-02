@@ -52,4 +52,19 @@ logs
 .Spotlight-V100
 .Trashes
 ehthumbs.db
-Thumbs.db 
+Thumbs.db
+
+# frontend specific
+/frontend/.next/
+/frontend/node_modules/
+/frontend/.DS_Store
+/frontend/coverage/
+/frontend/build/
+/frontend/.env*.local
+/frontend/.vercel
+/frontend/*.tsbuildinfo
+/frontend/dist/
+
+# temporary files
+**/temp_*.txt
+**/temp_* 
