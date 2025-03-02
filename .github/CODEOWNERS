@@ -1,0 +1,21 @@
+# These owners will be the default owners for everything in
+# the repo. Unless a later match takes precedence,
+# these owners will be requested for review when someone 
+# opens a pull request.
+*       @darkomijic
+
+# Backend code ownership
+/backend/ @darkomijic
+
+# Frontend code ownership
+/frontend/ @darkomijic
+
+# Infrastructure and DevOps
+/docker-compose.yml @darkomijic
+/.github/ @darkomijic
+
+# Shared libraries
+/libs/ @darkomijic
+
+# Documentation
+/documentation/ @darkomijic 
