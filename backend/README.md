@@ -7,6 +7,7 @@ This is the backend service for EBIZ-Saas, a financial management platform for s
 - **Framework**: NestJS with TypeScript
 - **ORM**: Prisma with PostgreSQL
 - **Authentication**: Google OAuth 2.0 with JWT
+- **Logging**: Winston with Elasticsearch integration
 - **AI Integration**: LangChain.js
 - **Vector Database**: Qdrant for AI features
 - **Bank Statements**: ISO 20022 CAMT.053 parser
@@ -41,7 +42,7 @@ npm install
 cp .env.example .env
 ```
 
-4. Start the database services with Docker:
+4. Start the database and infrastructure services with Docker:
 
 ```bash
 cd ..  # Go to root directory
@@ -62,6 +63,49 @@ npx prisma migrate dev
 npm run start:dev
 ```
 
+### Authentication System
+
+The authentication system uses Google OAuth 2.0 for user authentication:
+
+- **Google OAuth**: Used for securing user login
+- **JWT Tokens**: Generated after successful authentication
+- **Cookie-based Authentication**: Primary authentication method using HTTP-only cookies
+- **Token Extraction**: Supports both cookie and bearer token authentication
+- **Logout Endpoint**: Properly clears authentication cookies
+
+Key authentication files:
+- `src/auth/strategies/google.strategy.ts` - Google OAuth implementation
+- `src/auth/strategies/jwt.strategy.ts` - JWT token validation
+- `src/auth/auth.controller.ts` - Auth endpoints including logout
+- `src/auth/auth.service.ts` - User lookup and token generation
+
+For API endpoints that require authentication, use the `@UseGuards(AuthGuard('jwt'))` decorator.
+
+### Logging Infrastructure
+
+The backend includes a comprehensive logging system:
+
+- **Winston Logger**: Customized logging service at `src/common/logger/logger.service.ts`
+- **Elasticsearch Integration**: Logs are sent to Elasticsearch for centralized storage
+- **Authentication Logging**: Special methods for tracking auth events
+- **Log Levels**: Configurable via environment variables (`LOG_LEVEL`)
+- **Client-side Log Collection**: API endpoint for collecting frontend logs
+
+Usage example:
+```typescript
+// Inject the logger in your service/controller
+constructor(private readonly logger: LoggerService) {}
+
+// Regular logging
+this.logger.log('This is an info message', 'YourServiceName');
+this.logger.debug('This is a debug message', 'YourServiceName', { userId: '123' });
+this.logger.error('Error occurred', error, 'YourServiceName');
+
+// Auth-specific logging
+this.logger.logAuth('User login attempt', userId, { method: 'google' });
+this.logger.logAuthError('Login failed', error, userId);
+```
+
 ### Database Management
 
 - **PostgreSQL**: Running on port 5432
@@ -75,6 +119,8 @@ npm run start:dev
     - Database: ebiz_platform
 - **MinIO**: S3-compatible storage for documents available at http://localhost:9001
   - Login with minioadmin / minioadmin
+- **Elasticsearch**: Log storage available at http://localhost:9200
+- **Kibana**: Log visualization available at http://localhost:5601
 
 ### Database Schema
 
@@ -136,6 +182,18 @@ for (const tx of transactions) {
 
 Once the server is running, you can access the Swagger documentation at:
 http://localhost:3000/api-docs
+
+## Viewing Logs
+
+The application logs can be viewed in multiple ways:
+
+1. **Console**: All logs are output to the console during development
+2. **Files**: If file logging is enabled, logs are stored in the `logs` directory
+3. **Kibana**: For a graphical interface to search and filter logs:
+   - Open http://localhost:5601
+   - Navigate to "Analytics" > "Discover"
+   - Select the "ebiz-logs*" data view
+   - Use the search bar to filter logs (e.g., `severity:error` or `message:*auth*`)
 
 ## Testing
 
