@@ -2,7 +2,10 @@
 CREATE TYPE "UserRole" AS ENUM ('OWNER', 'ADMIN', 'USER');
 
 -- CreateEnum
-CREATE TYPE "TransactionStatus" AS ENUM ('COMPLETED', 'PENDING', 'FAILED');
+CREATE TYPE "BalanceType" AS ENUM ('OPBD', 'CLBD', 'ITBD', 'PRCD', 'FWAV', 'CLAV');
+
+-- CreateEnum
+CREATE TYPE "TransactionStatus" AS ENUM ('COMPLETED', 'PENDING', 'FAILED', 'BOOKED', 'INFORMATION', 'REJECTED');
 
 -- CreateEnum
 CREATE TYPE "RecurrencePattern" AS ENUM ('DAILY', 'WEEKLY', 'BIWEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY', 'IRREGULAR');
@@ -105,6 +108,8 @@ CREATE TABLE "balance_history" (
     "debited" DOUBLE PRECISION NOT NULL,
     "month" INTEGER NOT NULL,
     "year" INTEGER NOT NULL,
+    "balanceType" "BalanceType" NOT NULL DEFAULT 'CLBD',
+    "creditDebit" "CreditDebit" NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -117,6 +122,9 @@ CREATE TABLE "bank_statements" (
     "bankAccountId" TEXT NOT NULL,
     "statementId" TEXT NOT NULL,
     "sequenceNumber" INTEGER NOT NULL,
+    "legalSequenceNumber" INTEGER NOT NULL,
+    "messageId" TEXT NOT NULL,
+    "reportingSource" TEXT,
     "creationDate" TIMESTAMP(3) NOT NULL,
     "fromDate" TIMESTAMP(3) NOT NULL,
     "toDate" TIMESTAMP(3) NOT NULL,
@@ -125,6 +133,10 @@ CREATE TABLE "bank_statements" (
     "closingBalance" DOUBLE PRECISION NOT NULL,
     "currency" TEXT NOT NULL,
     "hasGap" BOOLEAN NOT NULL DEFAULT false,
+    "totalCreditEntries" INTEGER NOT NULL DEFAULT 0,
+    "totalCreditAmount" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "totalDebitEntries" INTEGER NOT NULL DEFAULT 0,
+    "totalDebitAmount" DOUBLE PRECISION NOT NULL DEFAULT 0,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -167,9 +179,18 @@ CREATE TABLE "transactions" (
     "status" "TransactionStatus" NOT NULL DEFAULT 'COMPLETED',
     "bookingDate" TIMESTAMP(3) NOT NULL,
     "valueDate" TIMESTAMP(3) NOT NULL,
+    "accountServicerRef" TEXT,
+    "endToEndId" TEXT,
+    "reversalIndicator" BOOLEAN NOT NULL DEFAULT false,
+    "bankTransactionCode" TEXT,
+    "bankTransactionFamily" TEXT,
+    "bankTransactionSubFamily" TEXT,
     "references" JSONB NOT NULL,
     "relatedParties" JSONB NOT NULL,
     "remittanceInfo" JSONB NOT NULL,
+    "structuredReference" TEXT,
+    "referenceType" TEXT,
+    "additionalRemittanceInfo" TEXT,
     "categoryId" TEXT,
     "vendorId" TEXT,
     "customerId" TEXT,
@@ -389,6 +410,9 @@ CREATE INDEX "bank_statements_bankAccountId_idx" ON "bank_statements"("bankAccou
 CREATE INDEX "bank_statements_fromDate_toDate_idx" ON "bank_statements"("fromDate", "toDate");
 
 -- CreateIndex
+CREATE INDEX "bank_statements_messageId_idx" ON "bank_statements"("messageId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "bank_statements_bankAccountId_statementId_key" ON "bank_statements"("bankAccountId", "statementId");
 
 -- CreateIndex
@@ -429,6 +453,18 @@ CREATE INDEX "transactions_categoryId_idx" ON "transactions"("categoryId");
 
 -- CreateIndex
 CREATE INDEX "transactions_recurringTransactionId_idx" ON "transactions"("recurringTransactionId");
+
+-- CreateIndex
+CREATE INDEX "transactions_accountServicerRef_idx" ON "transactions"("accountServicerRef");
+
+-- CreateIndex
+CREATE INDEX "transactions_endToEndId_idx" ON "transactions"("endToEndId");
+
+-- CreateIndex
+CREATE INDEX "transactions_bankTransactionCode_bankTransactionFamily_bank_idx" ON "transactions"("bankTransactionCode", "bankTransactionFamily", "bankTransactionSubFamily");
+
+-- CreateIndex
+CREATE INDEX "transactions_structuredReference_idx" ON "transactions"("structuredReference");
 
 -- CreateIndex
 CREATE INDEX "transaction_tags_transactionId_idx" ON "transaction_tags"("transactionId");
