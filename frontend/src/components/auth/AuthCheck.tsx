@@ -3,27 +3,45 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useToast } from '../../hooks/use-toast';
-import { setAuthCookie } from '../../lib/set-auth-cookie';
 
-// Simple mock of authentication for demo purposes
-// In a real app, this would use a proper auth library
+// Improved auth implementation to work with backend Google OAuth
 const useAuth = () => {
-  // Mock implementation
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
   
   useEffect(() => {
-    // Check for auth cookie or localStorage token
-    const hasAuthCookie = document.cookie.includes('auth_session');
-    setIsAuthenticated(hasAuthCookie);
-    
-    // For demo purposes, set a cookie to simulate being logged in
-    if (process.env.NODE_ENV === 'development' && !hasAuthCookie) {
-      setAuthCookie();
-      setIsAuthenticated(true);
-    }
-  }, []);
+    const checkAuth = async () => {
+      try {
+        // Check authentication status with the backend
+        const response = await fetch(`${apiUrl}/auth/check`, {
+          method: 'GET',
+          credentials: 'include', // Include cookies in the request
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setIsAuthenticated(true);
+          setUser(data.user);
+        } else {
+          setIsAuthenticated(false);
+        }
+      } catch (error) {
+        console.error('Auth check failed:', error);
+        setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, [apiUrl]);
   
-  return { isAuthenticated };
+  return { isAuthenticated, isLoading, user };
 };
 
 export default function AuthCheck({
@@ -31,24 +49,26 @@ export default function AuthCheck({
 }: {
   children: React.ReactNode;
 }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   
   useEffect(() => {
+    if (isLoading) return;
+    
     if (isAuthenticated === false) {
-      // User is not authenticated, redirect to home
+      // User is not authenticated, redirect to auth page
       toast({
         title: "Authentication required",
         description: "Please sign in to access this page",
         type: "error",
       });
-      router.push('/');
+      router.push('/auth');
     }
-  }, [isAuthenticated, router, toast]);
+  }, [isAuthenticated, isLoading, router, toast]);
   
   // Show loading spinner while checking authentication
-  if (isAuthenticated === null) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>

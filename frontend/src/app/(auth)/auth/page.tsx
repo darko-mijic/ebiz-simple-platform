@@ -10,8 +10,9 @@ export default function AuthPage() {
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);
-    // Redirect to our backend Google OAuth route
-    window.location.href = "/auth/google";
+    // Redirect to our backend Google OAuth route with proper API URL
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+    window.location.href = `${apiUrl}/auth/google`;
   };
 
   return (
