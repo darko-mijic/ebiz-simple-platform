@@ -1,7 +1,10 @@
 {
-  "/_not-found/page": "app/_not-found/page.js",
   "/page": "app/page.js",
+  "/(protected)/settings/page": "app/(protected)/settings/page.js",
   "/(auth)/auth/page": "app/(auth)/auth/page.js",
+  "/(protected)/bank-accounts/page": "app/(protected)/bank-accounts/page.js",
+  "/(protected)/dashboard/page": "app/(protected)/dashboard/page.js",
   "/(protected)/transactions/page": "app/(protected)/transactions/page.js",
-  "/(protected)/dashboard/page": "app/(protected)/dashboard/page.js"
+  "/(protected)/chat/page": "app/(protected)/chat/page.js",
+  "/(protected)/documents/page": "app/(protected)/documents/page.js"
 }

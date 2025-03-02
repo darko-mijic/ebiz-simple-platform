@@ -41,7 +41,7 @@ export default function AuthCheck({
       toast({
         title: "Authentication required",
         description: "Please sign in to access this page",
-        variant: "destructive",
+        type: "error",
       });
       router.push('/');
     }

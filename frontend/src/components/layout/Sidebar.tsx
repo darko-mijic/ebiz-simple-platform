@@ -14,13 +14,14 @@ import { cn } from '../../lib/utils';
 
 interface SidebarProps {
   className?: string;
+  collapsed?: boolean;
 }
 
-export function Sidebar({ className }: SidebarProps) {
-  const pathname = usePathname();
+export function Sidebar({ className, collapsed = false }: SidebarProps) {
+  const pathname = usePathname() || '';
 
   const navigation = [
-    { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Bank Accounts', href: '/bank-accounts', icon: CreditCard },
     { name: 'Transactions', href: '/transactions', icon: PieChart },
     { name: 'Documents', href: '/documents', icon: FileText },
@@ -29,12 +30,12 @@ export function Sidebar({ className }: SidebarProps) {
   ];
 
   return (
-    <div className={cn("w-64 bg-white dark:bg-gray-800 border-r dark:border-gray-700 h-full flex flex-col", className)}>
+    <div className={cn("bg-white dark:bg-gray-800 border-r dark:border-gray-700 h-full flex flex-col", className)}>
       <div className="p-4 flex items-center border-b dark:border-gray-700">
         <div className="w-8 h-8 bg-black rounded flex items-center justify-center mr-2">
           <span className="text-white font-bold">E</span>
         </div>
-        <span className="text-lg font-semibold">Ebiz Inc</span>
+        {!collapsed && <span className="text-lg font-semibold">Ebiz Inc</span>}
       </div>
       
       <nav className="flex-1 py-4 px-2">
@@ -51,9 +52,10 @@ export function Sidebar({ className }: SidebarProps) {
                       ? "bg-gray-100 dark:bg-gray-700 text-primary"
                       : "text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700"
                   )}
+                  title={collapsed ? item.name : undefined}
                 >
-                  <item.icon className="mr-3 h-5 w-5" />
-                  {item.name}
+                  <item.icon className={cn("h-5 w-5", collapsed ? "mx-auto" : "mr-3")} />
+                  {!collapsed && item.name}
                 </Link>
               </li>
             );
@@ -66,10 +68,12 @@ export function Sidebar({ className }: SidebarProps) {
           <div className="w-8 h-8 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center mr-2">
             <span className="text-gray-600 dark:text-white font-bold">U</span>
           </div>
-          <div>
-            <p className="text-sm font-medium">User</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">user@ebiz.com</p>
-          </div>
+          {!collapsed && (
+            <div>
+              <p className="text-sm font-medium">User</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">user@ebiz.com</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

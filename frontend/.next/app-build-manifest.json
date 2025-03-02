@@ -1,15 +1,26 @@
 {
   "pages": {
-    "/page": [
+    "/(protected)/settings/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/page.js"
+      "static/chunks/app/(protected)/settings/page.js"
+    ],
+    "/(protected)/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/css/app/(protected)/layout.css",
+      "static/chunks/app/(protected)/layout.js"
     ],
     "/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
+    ],
+    "/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/page.js"
     ],
     "/(auth)/auth/page": [
       "static/chunks/webpack.js",
@@ -22,26 +33,30 @@
       "static/css/app/(auth)/layout.css",
       "static/chunks/app/(auth)/layout.js"
     ],
-    "/(protected)/transactions/page": [
+    "/(protected)/bank-accounts/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(protected)/transactions/page.js"
-    ],
-    "/(protected)/layout": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/css/app/(protected)/layout.css",
-      "static/chunks/app/(protected)/layout.js"
+      "static/chunks/app/(protected)/bank-accounts/page.js"
     ],
     "/(protected)/dashboard/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(protected)/dashboard/page.js"
     ],
-    "/_not-found/page": [
+    "/(protected)/transactions/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/_not-found/page.js"
+      "static/chunks/app/(protected)/transactions/page.js"
+    ],
+    "/(protected)/documents/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(protected)/documents/page.js"
+    ],
+    "/(protected)/chat/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(protected)/chat/page.js"
     ]
   }
 }

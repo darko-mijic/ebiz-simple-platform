@@ -1,7 +1,11 @@
 "use client";
 
-import { Sidebar } from './sidebar';
+import { Sidebar } from './Sidebar';
 
-export default function SidebarWrapper() {
-  return <Sidebar />;
+interface SidebarWrapperProps {
+  collapsed?: boolean;
+}
+
+export default function SidebarWrapper({ collapsed = false }: SidebarWrapperProps) {
+  return <Sidebar collapsed={collapsed} />;
 } 

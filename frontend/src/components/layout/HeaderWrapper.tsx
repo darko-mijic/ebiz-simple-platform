@@ -1,7 +1,18 @@
 "use client";
 
-import { Header } from './header';
+import { Header } from './Header';
+import { useTheme } from '../providers/theme-provider';
 
-export default function HeaderWrapper() {
-  return <Header />;
+interface HeaderWrapperProps {
+  onToggleSidebar?: () => void;
+}
+
+export default function HeaderWrapper({ onToggleSidebar }: HeaderWrapperProps) {
+  const { theme, setTheme } = useTheme();
+  
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
+
+  return <Header toggleTheme={toggleTheme} theme={theme} onToggleSidebar={onToggleSidebar} />;
 } 

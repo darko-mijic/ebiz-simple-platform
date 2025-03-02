@@ -11,6 +11,122 @@ This is the Next.js frontend for the EBIZ-Saas platform.
 - Form handling with react-hook-form and zod
 - Proper Next.js client/server component architecture
 - Chart visualizations with Recharts
+- Multi-step onboarding flow with form validation
+- Dashboard with financial visualization
+- Toast notifications for user feedback
+- Clean, standardized directory structure
+
+## Important Setup Notes
+
+### Icon Configuration
+
+For proper icon display, the application requires the following icon files in the public directory:
+
+- `/favicon.ico` - Main favicon (16x16, 32x32)
+- `/apple-icon.png` - Apple touch icon (180x180)
+- `/icon/dark/16.png` - Dark mode small icon
+- `/icon/dark/32.png` - Dark mode large icon
+- `/icon/light/16.png` - Light mode small icon
+- `/icon/light/32.png` - Light mode large icon
+
+These files must be properly formatted binary image files in their respective formats (ico, png).
+
+### Troubleshooting Icon Errors
+
+If you encounter errors like "Failed to fetch" in browser extensions:
+
+1. Make sure all icon files exist in the proper locations
+2. Try using the `extension-manifest.json` file for browser extensions
+3. Use absolute URLs for icon paths in your extension configuration
+4. Access icons from the `/icon-fixed/` directory for extensions
+5. Clear browser caches and reload the extension
+
+### Chrome Extension Specific Issues
+
+If you encounter the error `Cannot read properties of undefined (reading 'setIcon')` in Chrome extensions:
+
+1. Make sure you're using the `extension-manifest.json` file as your manifest
+2. Verify that the included `background.js` script is being properly loaded
+3. Use relative paths (without leading slashes) for all icon references in the manifest
+4. Add the following permissions to your manifest:
+   ```json
+   "permissions": [
+     "activeTab",
+     "storage"
+   ]
+   ```
+5. Ensure your manifest includes a properly configured background script section:
+   ```json
+   "background": {
+     "scripts": ["background.js"],
+     "persistent": false
+   }
+   ```
+6. If the issue persists, you can implement a fallback icon in your extension's background script like this:
+   ```javascript
+   chrome.runtime.onInstalled.addListener(function() {
+     try {
+       chrome.browserAction.setIcon({
+         path: {
+           "16": "icon-fixed/dark/16.png",
+           "32": "icon-fixed/dark/32.png"
+         }
+       });
+     } catch (error) {
+       console.error('Error setting icon:', error);
+     }
+   });
+   ```
+
+When developing Chrome extensions that integrate with your Next.js app:
+
+1. Use the extension-specific manifest at `public/extension-manifest.json`
+2. Copy this file to your extension directory as `manifest.json`
+3. Include the `background.js` file from the public directory
+4. Ensure all icons are in the proper format and accessible to the extension
+
+## Recent Improvements
+
+### Directory Structure Refactoring
+- Cleaned up nested frontend directories for a standardized structure
+- Removed duplicate assets from multiple locations
+- Simplified icon references with absolute paths
+- Fixed type errors related to toast notifications
+- Improved build process by resolving configuration issues
+- Enhanced maintainability with a clean, standard Next.js structure
+
+### Dashboard Component Refactoring
+- Extracted monolithic dashboard into smaller, focused components
+- Created separate components for AccountSummary, RecentTransactions, RecentDocuments, and Alerts
+- Implemented proper TypeScript interfaces for all data models
+- Organized mock data into a dedicated file for better maintainability
+- Enhanced chart visualizations with:
+  - Proper axes and grid formatting
+  - Custom tooltips showing detailed information
+  - Improved colors and styling for better readability
+  - Donut chart for account distribution
+  - Custom legends and labels
+  - Responsive containers for all screen sizes
+  - Increased chart heights for better data representation
+
+### Layout Improvements
+- Refactored the LayoutWrapper to use SidebarWrapper and HeaderWrapper components
+- Implemented proper sidebar collapsing functionality
+- Added theme toggling in the header
+- Improved the overall structure and maintainability of the layout components
+
+### Onboarding Flow Implementation
+- Created a comprehensive onboarding page with a multi-step form
+- Implemented UserOnboardingForm and CompanyOnboardingForm components
+- Added validation using Zod for form fields
+- Implemented VAT ID validation simulation
+- Added proper navigation between steps and form submission handling
+
+### UI Component Library Enhancement
+- Created reusable UI components using Radix UI primitives
+- Implemented form components with proper validation
+- Added toast notifications for better user feedback
+- Created tabs, select, checkbox, and other UI components
 
 ## Getting Started
 
@@ -27,8 +143,14 @@ This is the Next.js frontend for the EBIZ-Saas platform.
 - `src/components`: Reusable UI components
   - `layout`: Layout components like Header and Sidebar
   - `ui`: UI components from shadcn/ui
+  - `dashboard`: Dashboard-specific components
+  - `auth`: Authentication and onboarding components
 - `src/lib`: Utility functions and configurations
 - `src/hooks`: Custom React hooks
+- `src/data`: Data models, types, and mock data
+- `public`: Static assets and icons
+  - `icon`: Theme-specific icons
+  - `icon-fixed`: Icons for browser extensions
 
 ## Next.js Component Structure
 
@@ -132,25 +254,59 @@ export default function MyComponent() {
 
 ## Data Visualization with Recharts
 
-The project uses Recharts (v2.15.1) for data visualization:
+The project uses Recharts (v2.15.1) for data visualization with enhanced charts:
 
 ```tsx
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { 
+  AreaChart, 
+  Area, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  ResponsiveContainer 
+} from 'recharts';
 
-// Example usage
-export default function TransactionChart({ data }) {
+// Example usage with enhanced styling
+export default function EnhancedAreaChart({ data }) {
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <BarChart data={data}>
+      <AreaChart data={data} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+        <defs>
+          <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
+            <stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
+          </linearGradient>
+        </defs>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="name" />
         <YAxis />
-        <Tooltip />
-        <Bar dataKey="value" fill="#8884d8" />
-      </BarChart>
+        <Tooltip content={<CustomTooltip />} />
+        <Area 
+          type="monotone" 
+          dataKey="value" 
+          stroke="#8884d8" 
+          fillOpacity={1} 
+          fill="url(#colorValue)" 
+        />
+      </AreaChart>
     </ResponsiveContainer>
   );
 }
+
+// Custom tooltip component
+const CustomTooltip = ({ active, payload, label }) => {
+  if (!active || !payload || !payload.length) return null;
+  
+  return (
+    <div className="rounded-lg border bg-background p-2 shadow-sm">
+      <p className="text-sm font-medium">{label}</p>
+      <p className="text-sm text-primary">
+        {`Value: ${payload[0].value.toLocaleString()}`}
+      </p>
+    </div>
+  );
+};
 ```
 
 ### Notifications
@@ -169,6 +325,7 @@ export default function MyComponent() {
         toast({
           title: "Success",
           description: "Operation completed successfully!",
+          type: "success", // Use type instead of variant
         });
       }}
     >
@@ -493,13 +650,13 @@ export default function SubmitButton() {
       toast({
         title: "Success!",
         description: "Your changes have been saved.",
-        variant: "default",
+        type: "success", // Use type instead of variant
       });
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to save changes.",
-        variant: "destructive",
+        type: "error", // Use type instead of variant
       });
     }
   };

@@ -407,7 +407,7 @@ export function Dashboard() {
         toast({
           title: "Refresh failed",
           description: "Some data couldn't be updated. Please try again.",
-          variant: "destructive",
+          type: "error",
         });
       }
     }, 1500);

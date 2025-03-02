@@ -4,28 +4,26 @@ import { usePathname } from 'next/navigation';
 import { Button } from '../ui/button';
 import { cn } from '../../lib/utils';
 import { Menu, Bell, Sun, Moon } from 'lucide-react';
-import { useTheme } from '../providers/theme-provider';
 
 interface HeaderProps {
   className?: string;
   onToggleSidebar?: () => void;
+  toggleTheme?: () => void;
+  theme?: string;
 }
 
-export function Header({ className, onToggleSidebar }: HeaderProps) {
-  const pathname = usePathname();
-  const { theme, setTheme } = useTheme();
+export function Header({ className, onToggleSidebar, toggleTheme, theme }: HeaderProps) {
+  const pathname = usePathname() || '';
 
   // Get the page title based on the current path
   const getPageTitle = () => {
-    if (pathname === '/') return 'Dashboard';
-    return pathname.split('/')[1]
-      .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  };
-
-  const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
+    if (pathname === '/dashboard') return 'Dashboard';
+    if (pathname.startsWith('/bank-accounts')) return 'Bank Accounts';
+    if (pathname.startsWith('/transactions')) return 'Transactions';
+    if (pathname.startsWith('/documents')) return 'Documents';
+    if (pathname.startsWith('/chat')) return 'Chat';
+    if (pathname.startsWith('/settings')) return 'Settings';
+    return 'Dashboard';
   };
 
   return (
