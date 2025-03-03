@@ -1,0 +1,12 @@
+{
+  "id": "test-company-id",
+  "name": "Test Company Ltd.",
+  "vatId": "12345678901",
+  "euVatId": "HR12345678901",
+  "localVatId": "12345678901",
+  "address": "Test Street 123",
+  "city": "Test City",
+  "postalCode": "10000",
+  "country": "HR",
+  "industry": "Technology"
+} 
