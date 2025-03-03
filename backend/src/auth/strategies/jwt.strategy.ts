@@ -44,21 +44,45 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(req: Request, payload: any) {
-    this.logger.debug('Validating JWT token', 'JwtStrategy', { 
+    this.logger.debug('Validating JWT token', { 
       userId: payload.sub,
       email: payload.email,
       hasCookie: !!req.cookies?.auth_session,
       hasAuthHeader: req.headers.authorization?.startsWith('Bearer ') || false,
     });
     
+    // Check if user exists in database
     const user = await this.authService.getUserById(payload.sub);
     
     if (!user) {
-      this.logger.logAuthError('JWT validation failed - user not found', 'User not found', payload.sub);
-      throw new UnauthorizedException('User not found');
+      this.logger.warn('JWT validation warning - user not found but token is valid', {
+        userId: payload.sub,
+        tokenEmail: payload.email,
+        message: 'This can happen after database resets or if the user was deleted'
+      });
+      
+      // We should still return the payload instead of throwing an error
+      // This allows the controller to handle the "user not found" case
+      // and properly clear the cookie
+      return {
+        sub: payload.sub,
+        email: payload.email,
+        iat: payload.iat,
+        exp: payload.exp,
+        // Flag to indicate the token is valid but user doesn't exist
+        userMissing: true
+      };
     }
     
     this.logger.logAuth('JWT validation successful', user.id);
-    return user;
+    
+    // Pass the payload directly instead of the user object
+    // This matches the JwtPayload interface in auth.controller.ts
+    return {
+      sub: payload.sub, 
+      email: payload.email,
+      iat: payload.iat,
+      exp: payload.exp
+    };
   }
 } 
