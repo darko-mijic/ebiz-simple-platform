@@ -14,6 +14,9 @@ interface LogData {
   [key: string]: any;
 }
 
+// Type for log method parameters to support both string messages and structured data
+type LogParams = string | Record<string, any>;
+
 @Injectable()
 export class LoggerService implements NestLoggerService {
   private logger: winston.Logger;
@@ -102,25 +105,70 @@ export class LoggerService implements NestLoggerService {
     this.logger.info(`Logger initialized in ${environment} mode with level ${logLevel}`);
   }
 
-  // Standard logger methods
-  log(message: string, context?: string, ...meta: any[]): void {
-    this.logger.info(message, { context, ...this.formatMeta(meta) });
+  // Overloaded methods to support both string messages and structured data
+  log(message: string, contextOrMeta?: string | Record<string, any>, ...meta: any[]): void {
+    this.processLog('info', message, contextOrMeta, meta);
   }
 
-  error(message: string, trace?: string, context?: string, ...meta: any[]): void {
-    this.logger.error(message, { trace, context, ...this.formatMeta(meta) });
+  error(message: string, traceOrMeta?: string | Record<string, any>, contextOrMeta?: string | Record<string, any>, ...meta: any[]): void {
+    // Handle both string trace and structured meta
+    if (typeof traceOrMeta === 'string') {
+      this.processLog('error', message, contextOrMeta, [...meta, { trace: traceOrMeta }]);
+    } else {
+      this.processLog('error', message, traceOrMeta, meta);
+    }
   }
 
-  warn(message: string, context?: string, ...meta: any[]): void {
-    this.logger.warn(message, { context, ...this.formatMeta(meta) });
+  warn(message: string, contextOrMeta?: string | Record<string, any>, ...meta: any[]): void {
+    this.processLog('warn', message, contextOrMeta, meta);
   }
 
-  debug(message: string, context?: string, ...meta: any[]): void {
-    this.logger.debug(message, { context, ...this.formatMeta(meta) });
+  debug(message: string, contextOrMeta?: string | Record<string, any>, ...meta: any[]): void {
+    this.processLog('debug', message, contextOrMeta, meta);
   }
 
-  verbose(message: string, context?: string, ...meta: any[]): void {
-    this.logger.verbose(message, { context, ...this.formatMeta(meta) });
+  verbose(message: string, contextOrMeta?: string | Record<string, any>, ...meta: any[]): void {
+    this.processLog('verbose', message, contextOrMeta, meta);
+  }
+
+  // Helper method to handle both string context and structured data
+  private processLog(level: string, message: string, contextOrMeta?: string | Record<string, any>, meta: any[] = []): void {
+    // Safe way to access dynamic logger methods
+    const logMethod = this.getLoggerMethod(level);
+    
+    if (typeof contextOrMeta === 'string') {
+      // If context is a string, use it as context field
+      logMethod(message, { context: contextOrMeta, ...this.formatMeta(meta) });
+    } else if (contextOrMeta && typeof contextOrMeta === 'object') {
+      // If context is an object, merge it with other meta
+      logMethod(message, { ...contextOrMeta, ...this.formatMeta(meta) });
+    } else {
+      // If no context, just log the message and meta
+      logMethod(message, this.formatMeta(meta));
+    }
+  }
+  
+  // Helper to safely get logger methods by name
+  private getLoggerMethod(level: string): (message: string, meta?: any) => void {
+    switch (level) {
+      case 'info':
+        return this.logger.info.bind(this.logger);
+      case 'error':
+        return this.logger.error.bind(this.logger);
+      case 'warn':
+        return this.logger.warn.bind(this.logger);
+      case 'debug':
+        return this.logger.debug.bind(this.logger);
+      case 'verbose':
+        return this.logger.verbose.bind(this.logger);
+      default:
+        return this.logger.info.bind(this.logger);
+    }
+  }
+
+  // Add info method that's referenced in some parts of the code
+  info(message: string, contextOrMeta?: string | Record<string, any>, ...meta: any[]): void {
+    this.processLog('info', message, contextOrMeta, meta);
   }
 
   // Auth specific logging methods
@@ -136,8 +184,8 @@ export class LoggerService implements NestLoggerService {
     this.logger.error(`Auth Error: ${action}`, {
       module: 'auth',
       userId,
-      error: error.message || error,
-      stack: error.stack,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
       ...details,
     });
   }
