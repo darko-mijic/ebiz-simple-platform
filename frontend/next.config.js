@@ -4,7 +4,7 @@ const nextConfig = {
   transpilePackages: ['@ebiz/libs'],
   // Configure image domains if needed
   images: {
-    domains: ['placehold.co'],
+    domains: ['placehold.co', 'lh3.googleusercontent.com'],
   },
   // Disable ESLint during build
   eslint: {
@@ -15,6 +15,10 @@ const nextConfig = {
       {
         source: '/api/:path*',
         destination: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/:path*',
+      },
+      {
+        source: '/api/onboarding/:path*',
+        destination: 'http://localhost:3000/onboarding/:path*',
       },
     ];
   },

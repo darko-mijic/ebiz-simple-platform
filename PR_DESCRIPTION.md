@@ -159,4 +159,183 @@ npm run dev
    - Confirm responsive layout works on different screen sizes
 
 ## Screenshots
-[Include key screenshots of main application views] 
+[Include key screenshots of main application views]
+
+# Google Authentication, Structured Logging and Test Infrastructure
+
+## Overview
+This PR introduces Google OAuth authentication, comprehensive structured logging, and establishes test infrastructure for the EBIZ Simple Platform. It provides the foundation for secure authentication flows, monitoring capabilities, and automated testing to ensure code quality.
+
+## Key Changes
+
+### 🔐 Google OAuth Authentication
+- Implemented complete Google OAuth authentication flow
+- Added JWT token-based authentication for API endpoints
+- Created secure user creation and linking during OAuth login
+- Added protection for routes with JWT auth guards
+- Implemented proper error handling for authentication edge cases
+
+### 📊 Structured Logging System
+- Implemented Winston logger with multiple transport options:
+  - Console output for development
+  - Combined and error-specific file logging
+  - Elasticsearch integration for production (configured but disabled)
+- Created domain-specific logging methods for authentication, users, etc.
+- Added structured JSON format with consistent fields and metadata
+- Implemented context-aware logging throughout the application
+- Support for correlation IDs to track requests across services
+
+### 🧪 Test Infrastructure
+- Set up Cypress for frontend integration testing
+- Implemented Playwright for end-to-end testing
+- Created test utilities and fixtures
+- Added test configurations for different environments
+- Set up mock data and authentication flows for testing
+
+### 🧩 Additional Improvements
+- Added modules for onboarding, VAT validation, and custom validators
+- Enhanced error handling with structured error responses
+- Added comprehensive documentation for authentication, logging, and testing
+- Improved project structure with dedicated directories for tests
+- Updated README with detailed sections on authentication, logging, and testing
+
+## Technical Details
+
+### Authentication Architecture
+The authentication system follows these key principles:
+
+1. **Separation of Concerns**:
+   - `AuthService` for core authentication logic
+   - `GoogleStrategy` for OAuth provider integration
+   - `JwtStrategy` for token validation
+   - `JwtAuthGuard` for protecting routes
+
+2. **User Management**:
+   - Automatic user creation for new OAuth logins
+   - Profile information synchronization
+   - Secure JWT token generation and validation
+
+3. **Security Considerations**:
+   - Token expiration and refresh mechanisms
+   - Proper error handling for failed authentication
+   - Secure storage of OAuth credentials
+   - Protection against common authentication attacks
+
+### Logging Architecture
+The logging system is designed with these features:
+
+1. **Structured Format**:
+   - JSON-based logs for machine readability
+   - Consistent field naming and structure
+   - Contextual metadata for every log entry
+
+2. **Multiple Transport Options**:
+   - Console transport with color coding for development
+   - File transport with rotation for persistent storage
+   - Elasticsearch transport (configurable for production)
+
+3. **Log Levels and Categorization**:
+   - ERROR: Critical issues requiring immediate attention
+   - WARN: Potential problems that don't prevent operation
+   - INFO: Significant events and milestones
+   - DEBUG: Detailed information for troubleshooting
+   - VERBOSE: Extremely detailed diagnostic information
+
+### Test Infrastructure
+The test infrastructure consists of:
+
+1. **Frontend Testing (Cypress)**:
+   - Component testing for React components
+   - Integration testing for user flows
+   - Custom commands for authentication and common actions
+
+2. **End-to-End Testing (Playwright)**:
+   - Cross-browser testing capabilities
+   - Visual regression testing
+   - API mocking for consistent test environments
+
+3. **Test Utilities**:
+   - Mock data generators
+   - Authentication helpers
+   - Custom assertions
+
+## How to Test
+
+1. **Authentication Testing**:
+```bash
+# Start the backend
+cd backend
+npm run start:dev
+
+# Start the frontend 
+cd frontend
+npm run dev
+
+# Test Google OAuth flow by visiting:
+http://localhost:3001/auth/login
+```
+
+2. **View Logs**:
+```bash
+# Check combined logs
+cat backend/logs/combined.log
+
+# Check error logs
+cat backend/logs/error.log
+```
+
+3. **Run Tests**:
+```bash
+# Run Cypress tests
+cd frontend
+npm run cy:run
+
+# Run Playwright tests
+npm run test:e2e
+```
+
+## Review Checklist
+
+When reviewing this PR, please check the following:
+
+- [ ] Google OAuth configuration is correct in environment variables
+- [ ] JWT secret is properly configured and secure
+- [ ] Authentication flow works for new and existing users
+- [ ] Protected routes properly require authentication
+- [ ] Logging is comprehensive and provides useful information
+- [ ] Log levels are appropriate for different scenarios
+- [ ] Error handling is robust and provides clear error messages
+- [ ] Tests cover critical authentication and user flows
+- [ ] Documentation is complete and accurate
+
+## Known Issues and Future Improvements
+
+Based on the logs and current implementation, here are areas for future improvement:
+
+1. **Authentication Enhancements**:
+   - Add support for other OAuth providers (GitHub, Microsoft)
+   - Implement role-based authorization
+   - Add multi-factor authentication
+   - Add proper email verification flow
+
+2. **Logging Improvements**:
+   - Implement log rotation and archiving for production
+   - Add better correlation between frontend and backend logs
+   - Add performance metrics logging
+   - Implement automated log analysis for error detection
+
+3. **Testing Enhancements**:
+   - Expand test coverage for all authentication edge cases
+   - Add load testing for authentication endpoints
+   - Implement integration tests for all API endpoints
+   - Add snapshot testing for UI components
+
+4. **Schema Issues**:
+   - Fix database schema issues with user model (missing phone column)
+   - Complete and verify all database relationships
+   - Add validation to prevent onboarding without proper authentication
+
+5. **Error Handling**:
+   - Improve error messages for user-facing errors
+   - Add more granular error logging for debugging
+   - Implement global exception filters for consistent error responses 
