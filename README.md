@@ -9,6 +9,7 @@ EBIZ-Saas is a modern financial management platform tailored for small to medium
 - Transaction management and filtering
 - Document management with invoice linking
 - Chat interface with generative UI responses
+- Comprehensive structured logging system
 
 ## Tech Stack
 
@@ -16,6 +17,7 @@ EBIZ-Saas is a modern financial management platform tailored for small to medium
 - **Backend**: NestJS with Prisma and LangChain.js
 - **Database**: PostgreSQL (relational data)
 - **Monorepo**: npm workspaces
+- **Logging**: Winston for backend, custom logger for frontend
 
 ## Project Structure
 
@@ -75,17 +77,114 @@ DATABASE_URL=postgresql://ebizadmin:ebiz_secure_pwd@localhost:5432/ebiz_saas
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
 JWT_SECRET=your_jwt_secret
+LOG_LEVEL=info  # debug, info, warn, error
 ```
 
 ### Frontend (.env.local)
 ```
 NEXT_PUBLIC_API_URL=http://localhost:3000
+NEXT_PUBLIC_LOG_LEVEL=info  # debug, info, warn, error
+NEXT_PUBLIC_SERVER_LOGGING=true  # Set to false to disable sending logs to backend
 ```
 
 ## Development Workflow
 
 - **Start both applications**: `npm run dev`
 - **Run end-to-end tests**: `npm run test:e2e`
+
+## Logging System
+
+The platform includes a comprehensive structured logging system for both backend and frontend:
+
+### Backend Logging
+
+- Uses Winston for structured logging
+- Logs to console (with colors) and files
+- Stores logs in `backend/logs/` directory with multiple formats:
+  - `combined.log` and `error.log`: JSON format for machine processing
+  - `readable.log` and `readable-error.log`: Human-readable format for easier debugging
+- HTTP request/response logging middleware
+- Configurable log levels via environment variables
+
+### Frontend Logging
+
+- Structured logging in browser console
+- Sends logs to backend for centralized storage
+- Automatically logs uncaught errors and unhandled promise rejections
+- React hook for easy logging in components
+- API utilities with built-in logging
+
+### Using the Logger
+
+#### In Backend Services:
+
+```typescript
+import { Injectable } from '@nestjs/common';
+import { LoggerService } from '../logger/logger.service';
+
+@Injectable()
+export class YourService {
+  constructor(private readonly logger: LoggerService) {
+    this.logger.setContext('YourService');
+  }
+
+  someMethod() {
+    this.logger.log('This is an info message');
+    this.logger.debug('This is a debug message');
+    this.logger.warn('This is a warning', 'CustomContext', { additionalData: 'value' });
+    
+    try {
+      // Some code that might throw
+    } catch (error) {
+      this.logger.error('An error occurred', error.stack, 'ErrorContext', { additionalData: 'value' });
+    }
+  }
+}
+```
+
+#### In Frontend Components:
+
+```typescript
+import { useLogger } from '@/hooks/useLogger';
+import api from '@/utils/api';
+
+function YourComponent() {
+  const logger = useLogger('YourComponent');
+  
+  const handleClick = () => {
+    logger.info('Button clicked', 'UserAction', { buttonId: 'submit' });
+  };
+  
+  const handleApiCall = async () => {
+    try {
+      // API utilities automatically log requests/responses
+      const data = await api.fetchJson('/api/some-endpoint');
+    } catch (error) {
+      logger.error('API call failed', 'API', error);
+    }
+  };
+  
+  return <button onClick={handleClick}>Click Me</button>;
+}
+```
+
+### Log Formats
+
+The backend logging system provides logs in two formats:
+
+#### JSON Format (for machine processing)
+```json
+{"timestamp":"2025-03-05T11:50:07.080Z","level":"info","message":"LoggerModule dependencies initialized","context":"InstanceLoader","service":"backend"}
+```
+
+#### Human-Readable Format (for easier debugging)
+```
+2025-03-05 11:50:07.080 [InstanceLoader] INFO: LoggerModule dependencies initialized
+```
+
+### Logging Example Page
+
+Visit http://localhost:3001/logging-example to see a demonstration of the logging system.
 
 ## License
 
@@ -141,8 +240,7 @@ cd frontend
 npx shadcn-ui@latest add dialog
 ```
 
-Remember to check the [shadcn/ui documentation](https://ui.shadcn.com/docs) for more details on available components. 
-
+Remember to check the [shadcn/ui documentation](https://ui.shadcn.com/docs) for more details on available components.
 
 ## Bash commands
 

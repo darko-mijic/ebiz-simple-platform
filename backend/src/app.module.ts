@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
@@ -9,12 +9,15 @@ import { TransactionsModule } from './transactions/transactions.module';
 import { DocumentsModule } from './documents/documents.module';
 import { ChatModule } from './chat/chat.module';
 import { PrismaModule } from './common/prisma/prisma.module';
+import { LoggerModule } from './logger/logger.module';
+import { HttpLoggerMiddleware } from './logger/http-logger.middleware';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+    LoggerModule,
     PrismaModule,
     AuthModule,
     UsersModule,
@@ -26,4 +29,8 @@ import { PrismaModule } from './common/prisma/prisma.module';
     ChatModule,
   ],
 })
-export class AppModule {} 
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(HttpLoggerMiddleware).forRoutes('*');
+  }
+} 
