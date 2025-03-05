@@ -99,8 +99,9 @@ This architecture streamlines development, improves compatibility with AI coding
     ```yaml
     version: '3.8'
     services:
+      # PostgreSQL Database - configured to match Prisma connection string
       postgres:
-        image: postgres:15
+        image: postgres:16-alpine
         ports:
           - "5432:5432"
         environment:
@@ -114,51 +115,26 @@ This architecture streamlines development, improves compatibility with AI coding
           interval: 10s
           timeout: 5s
           retries: 5
-          
-      pgadmin:
-        image: dpage/pgadmin4:latest
-        ports:
-          - "5050:80"
-        environment:
-          PGADMIN_DEFAULT_EMAIL: admin@ebiz.com
-          PGADMIN_DEFAULT_PASSWORD: admin_secure_pwd
-        volumes:
-          - pgadmin_data:/var/lib/pgadmin
-        depends_on:
-          - postgres
-          
-      qdrant:
-        image: qdrant/qdrant:latest
-        ports:
-          - "6333:6333"
-          - "6334:6334"
-        volumes:
-          - qdrant_data:/qdrant/storage
-        environment:
-          QDRANT_ALLOW_RECOVERY_MODE: "true"
+        restart: unless-stopped
+    
     volumes:
       postgres_data:
-      pgadmin_data:
-      qdrant_data:
     ```
-  - Access PostgreSQL web interface via pgAdmin at: http://localhost:5050
-    - Login: admin@ebiz.com / admin_secure_pwd
-    - Connect to the database server using:
-      - Host: postgres
-      - Port: 5432
-      - Username: ebizadmin
-      - Password: ebiz_secure_pwd
-  - Backend connects via `DATABASE_URL=postgresql://ebizadmin:ebiz_secure_pwd@localhost:5432/ebiz_saas` and `QDRANT_HOST=http://localhost:6333`.
-- **Database Migration Strategy**:
-  - Prisma handles schema migrations with versioned migration files 
-  - Migration commands:
-    ```
-    npx prisma migrate dev --name <migration-name>  # Development
-    npx prisma migrate deploy                       # Production
-    ```
-  - Initial data seeding via Prisma's seed functionality
+    Note: The Docker setup has been simplified to only include PostgreSQL for Prisma ORM.
+  
+  - Database access: 
+    - Direct access to PostgreSQL on port 5432
+    - Credentials: ebizadmin / ebiz_secure_pwd / ebiz_saas
+  - **Database Migration Strategy**:
+    - Prisma handles schema migrations with versioned migration files 
+    - Migration commands:
+      ```
+      npx prisma migrate dev --name <migration-name>  # Development
+      npx prisma migrate deploy                       # Production
+      ```
+    - Initial data seeding via Prisma's seed functionality
 
-- **Why This Works**: Running only databases in Docker simplifies setup, reduces overhead, and preserves hot reloading for application code on the host machine.
+  - **Why This Works**: Running only databases in Docker simplifies setup, reduces overhead, and preserves hot reloading for application code on the host machine.
 
 ---
 
