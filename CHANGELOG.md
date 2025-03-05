@@ -10,11 +10,13 @@ All notable changes to the EBIZ-Saas Platform project will be documented in this
 - Removed backend/docker-compose.yml to consolidate to a single Docker configuration
 - Updated documentation to reflect Docker configuration changes
 - Fixed backend startup issues by updating TypeScript configuration and using ts-node-dev
+- Added prestart:dev script to ensure Prisma client is generated before starting the application
 
 ### Fixed
 - Fixed PostgreSQL version compatibility issue by reverting to postgres:15
 - Fixed backend startup issues with npm run start:dev
 - Removed obsolete version attribute from docker-compose.yml
+- Fixed Prisma client initialization issues by running migrations and ensuring proper generation
 
 ## [Unreleased]
 ### 2025-03-02
