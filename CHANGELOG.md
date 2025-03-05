@@ -5,6 +5,17 @@ All notable changes to the EBIZ-Saas Platform project will be documented in this
 ## [Unreleased]
 ### 2025-03-05
 
+### Added
+- Implemented enhanced OAuth authentication flow with both real and mock options
+- Added a dedicated mock OAuth server for development and testing
+- Created a "Continue with Mock Auth" button visible only in development
+- Implemented user profile display in the sidebar with real user information
+- Added logout functionality accessible from the user profile
+- Protected routes to redirect unauthenticated users to login
+- Added auth state handling to prevent showing login page to authenticated users
+- Created a clean auth callback page to handle authentication tokens
+- Implemented JWT token storage and management
+
 ### Changed
 - Simplified Docker configuration to only include PostgreSQL for Prisma ORM
 - Removed backend/docker-compose.yml to consolidate to a single Docker configuration
@@ -17,6 +28,7 @@ All notable changes to the EBIZ-Saas Platform project will be documented in this
 - Fixed backend startup issues with npm run start:dev
 - Removed obsolete version attribute from docker-compose.yml
 - Fixed Prisma client initialization issues by running migrations and ensuring proper generation
+- Fixed authentication flow to properly handle tokens and redirects
 
 ## [Unreleased]
 ### 2025-03-02

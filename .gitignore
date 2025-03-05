@@ -68,3 +68,8 @@ Thumbs.db
 # temporary files
 **/temp_*.txt
 **/temp_* 
+
+# dev workflow
+pr-description.md
+
+
