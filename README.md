@@ -18,6 +18,7 @@ EBIZ-Saas is a modern financial management platform tailored for small to medium
 - **Database**: PostgreSQL (relational data)
 - **Monorepo**: npm workspaces
 - **Logging**: Winston for backend, custom logger for frontend
+- **Authentication**: Google OAuth2 with mock server for development
 
 ## Project Structure
 
@@ -76,8 +77,16 @@ Create `.env` files in the backend and frontend directories:
 DATABASE_URL=postgresql://ebizadmin:ebiz_secure_pwd@localhost:5432/ebiz_saas
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_CALLBACK_URL=http://localhost:3000/auth/google/callback
 JWT_SECRET=your_jwt_secret
 LOG_LEVEL=info  # debug, info, warn, error
+
+# Mock OAuth (for development)
+USE_MOCK_OAUTH=true
+MOCK_OAUTH_HOST=http://localhost:8080
+MOCK_OAUTH_PORT=8080
+MOCK_CLIENT_ID=mock-client-id
+MOCK_CLIENT_SECRET=mock-client-secret
 ```
 
 ### Frontend (.env.local)
@@ -91,6 +100,39 @@ NEXT_PUBLIC_SERVER_LOGGING=true  # Set to false to disable sending logs to backe
 
 - **Start both applications**: `npm run dev`
 - **Run end-to-end tests**: `npm run test:e2e`
+
+## OAuth Mock Server
+
+For development and testing purposes, the platform includes a mock OAuth2 server that simulates Google's OAuth authentication flow. This allows you to develop and test the authentication features without needing to connect to the real Google OAuth service.
+
+### How it Works
+
+- The mock OAuth server is automatically started when you run `npm run dev` or `npm run start:dev` in the backend directory.
+- It runs on port 8080 by default (configurable via `MOCK_OAUTH_PORT` environment variable).
+- When `USE_MOCK_OAUTH=true` is set in the backend `.env` file, the application will use the mock server instead of the real Google OAuth service.
+
+### Test User Credentials
+
+When using the mock OAuth server, you'll be automatically authenticated with the following test user:
+- **Email**: test@example.com
+- **Name**: Test User
+- **Google ID**: mock-google-id
+
+### Mock OAuth Server Endpoints
+
+- **Authorization URL**: http://localhost:8080/auth
+- **Token URL**: http://localhost:8080/token
+- **JWKS URL**: http://localhost:8080/jwks
+- **Discovery URL**: http://localhost:8080/.well-known/openid-configuration
+
+### Running the Mock Server Separately
+
+If you need to run the mock OAuth server separately (not recommended for normal development):
+
+```bash
+cd backend
+npm run mock:oauth
+```
 
 ## Logging System
 
