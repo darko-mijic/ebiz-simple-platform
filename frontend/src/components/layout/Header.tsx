@@ -1,9 +1,9 @@
 "use client";
 
 import { usePathname } from 'next/navigation';
+import { Bell, Menu, Moon, Sun } from 'lucide-react';
 import { Button } from '../ui/button';
 import { cn } from '../../lib/utils';
-import { Menu, Bell, Sun, Moon } from 'lucide-react';
 
 interface HeaderProps {
   className?: string;
