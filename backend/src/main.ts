@@ -2,9 +2,17 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { LoggerService } from './logger/logger.service';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // Create logger instance
+  const logger = new LoggerService();
+  logger.setContext('Bootstrap');
+  
+  // Create app with custom logger
+  const app = await NestFactory.create(AppModule, {
+    logger: logger,
+  });
   
   // Enable CORS
   app.enableCors({
@@ -34,7 +42,7 @@ async function bootstrap() {
   // Start the server
   const port = process.env.PORT || 3000;
   await app.listen(port);
-  console.info(`Application is running on: http://localhost:${port}`);
+  logger.log(`Application is running on: http://localhost:${port}`);
 }
 
 bootstrap(); 
