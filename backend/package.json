@@ -7,6 +7,7 @@
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\"",
     "start": "node dist/main",
+    "prestart:dev": "npx prisma generate",
     "start:dev": "ts-node-dev --respawn src/main.ts",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
