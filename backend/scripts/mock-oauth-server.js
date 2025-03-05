@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const { OAuth2Server } = require('oauth2-mock-server');
+const url = require('url');
 
 // Create a new instance of the mock OAuth2 server
 const server = new OAuth2Server();
@@ -17,6 +18,26 @@ async function setup() {
     await server.start(port, 'localhost');
     console.log(`Mock OAuth2 Server is running at ${server.issuer.url}`);
     
+    // Add a client
+    const clientId = process.env.MOCK_CLIENT_ID || 'mock-client-id';
+    const clientSecret = process.env.MOCK_CLIENT_SECRET || 'mock-client-secret';
+    
+    // Handle authorization requests
+    server.service.on('beforeAuthorizeRedirect', (authorizeRedirectUri, req) => {
+      console.log('Authorization request received:', req.query);
+      console.log('Redirecting to:', req.query.redirect_uri);
+      
+      // Make sure the redirect URI includes the code parameter
+      const redirectUrl = new URL(req.query.redirect_uri);
+      if (!redirectUrl.searchParams.has('code')) {
+        redirectUrl.searchParams.set('code', 'mock_auth_code');
+      }
+      
+      // Update the redirect URI
+      authorizeRedirectUri.url = redirectUrl.toString();
+      console.log('Updated redirect URI:', authorizeRedirectUri.url);
+    });
+    
     // Configure token response
     server.service.on('beforeTokenSigning', (token, req) => {
       // Add custom claims to the token
@@ -29,6 +50,7 @@ async function setup() {
         family_name: 'User',
         picture: 'https://via.placeholder.com/150'
       });
+      console.log('Token signing with claims:', token);
       return token;
     });
 
@@ -43,6 +65,7 @@ async function setup() {
         family_name: 'User',
         picture: 'https://via.placeholder.com/150'
       };
+      console.log('Userinfo response:', userInfoResponse.body);
     });
 
     // Log some useful information
@@ -54,6 +77,9 @@ async function setup() {
     console.log('- Email: test@example.com');
     console.log('- Name: Test User');
     console.log('- Google ID: mock-google-id');
+    console.log('\nClient credentials:');
+    console.log(`- Client ID: ${clientId}`);
+    console.log(`- Client Secret: ${clientSecret}`);
   } catch (error) {
     console.error('Error starting the server:', error);
     process.exit(1);

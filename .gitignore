@@ -70,6 +70,6 @@ Thumbs.db
 **/temp_* 
 
 # dev workflow
-pr-description.md //used for PR descriptions for active development
+pr-description.md
 
 
