@@ -24,7 +24,8 @@ async function bootstrap() {
   );
   
   // Add global exception filter to sanitize error responses
-  app.useGlobalFilters(new HttpExceptionFilter());
+  const loggerService = app.get(LoggerService);
+  app.useGlobalFilters(new HttpExceptionFilter(loggerService));
   
   // Get frontend URL from config for CORS
   const frontendUrl = configService.get<string>('FRONTEND_URL') || 'http://localhost:3001';

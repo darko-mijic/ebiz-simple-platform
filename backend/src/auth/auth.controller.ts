@@ -82,7 +82,7 @@ export class AuthController {
       
       // Get the frontend URL from config
       const frontendUrl = this.configService.get<string>('FRONTEND_URL');
-      const token = auth.access_token;
+      const token = auth.accessToken;
       
       // Set the token as a cookie for the frontend to use
       res.cookie('auth_session', token, {

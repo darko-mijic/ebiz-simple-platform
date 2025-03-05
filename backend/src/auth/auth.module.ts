@@ -7,6 +7,8 @@ import { AuthService } from './auth.service';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { PrismaModule } from '../common/prisma/prisma.module';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -24,7 +26,16 @@ import { PrismaModule } from '../common/prisma/prisma.module';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, GoogleStrategy, JwtStrategy],
-  exports: [AuthService],
+  providers: [
+    AuthService, 
+    GoogleStrategy, 
+    JwtStrategy,
+    // Register JwtAuthGuard as a global guard
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    }
+  ],
+  exports: [AuthService, JwtModule],
 })
 export class AuthModule {} 

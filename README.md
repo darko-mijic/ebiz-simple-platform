@@ -514,99 +514,29 @@ npm run test:e2e
 
 ## Authentication
 
-The platform uses Google OAuth 2.0 for secure authentication, providing users with a streamlined sign-in experience.
+The EBIZ Simple Platform now supports Google OAuth authentication for secure user login. Key features include:
 
-### Setting Up Authentication
+- **Google OAuth**: Login using your Google account with secure token-based authentication
+- **JWT Authentication**: Secure access to protected resources using JWT tokens
+- **Public Routes**: Certain routes can be marked as public to bypass authentication
 
-1. Create a Google OAuth 2.0 client in the [Google Cloud Console](https://console.cloud.google.com/)
-2. Configure the OAuth consent screen
-3. Create OAuth client credentials
-4. Add authorized redirect URIs:
-   - Development: `http://localhost:3000/auth/google/callback`
-   - Production: `https://yourdomain.com/auth/google/callback`
+For more information about the authentication system, see [AUTHENTICATION.md](./docs/AUTHENTICATION.md).
 
-### Environment Variables
+## Logging
 
-Create or update your `.env` files with the following variables:
+The platform uses a structured logging system with the following features:
 
-```
-# Backend .env
-GOOGLE_CLIENT_ID=your_client_id
-GOOGLE_CLIENT_SECRET=your_client_secret
-GOOGLE_CALLBACK_URL=http://localhost:3000/auth/google/callback
-JWT_SECRET=your_jwt_secret
-JWT_EXPIRATION=3600s
-```
-
-### Authentication Flow
-
-1. User initiates login by clicking "Sign in with Google"
-2. Google OAuth consent screen is displayed
-3. After consent, user is redirected back to the application
-4. JWT token is issued for API authentication
-5. Protected routes require valid JWT token
-
-For detailed implementation information, see [AUTHENTICATION.md](./docs/AUTHENTICATION.md).
-
-## Structured Logging
-
-The platform implements a comprehensive structured logging system to facilitate debugging, monitoring, and analysis.
-
-### Log Levels
-
-- **ERROR**: Critical issues requiring immediate attention
-- **WARN**: Potential problems that don't prevent operation
-- **INFO**: Significant events and milestones
-- **DEBUG**: Detailed information for troubleshooting
-- **VERBOSE**: Extremely detailed diagnostic information
-
-### Log Storage
-
-- Development: Local files in `backend/logs/`
-  - `combined.log`: All logs
-  - `error.log`: Error logs only
-- Production: Elasticsearch (configurable)
-
-### Using Logs
-
-Access development logs:
-
-```bash
-# View all logs
-cat backend/logs/combined.log
-
-# View only errors
-cat backend/logs/error.log
-
-# Tail logs in real-time
-tail -f backend/logs/combined.log
-```
-
-For detailed logging information, see [LOGGING.md](./docs/LOGGING.md).
+- **Consistent Format**: All logs follow a consistent, structured format
+- **Correlation IDs**: Request tracking across the entire system
+- **Elasticsearch Integration**: Log aggregation in production (when available)
+- **Contextual Information**: Rich context for all log entries
 
 ## Testing
 
-The platform includes multiple testing layers to ensure functionality and reliability.
+We follow a comprehensive testing strategy:
 
-### Testing Frameworks
+- **Unit Testing**: For individual components and services
+- **Integration Testing**: For API endpoints and services
+- **E2E Testing**: Full user workflows as executable specifications
 
-- **Cypress**: Frontend integration testing
-- **Playwright**: End-to-end testing
-- **Jest**: Unit testing
-
-### Running Tests
-
-```bash
-# Run frontend integration tests with Cypress
-cd frontend
-npm run cy:open  # Interactive mode
-npm run cy:run   # Headless mode
-
-# Run end-to-end tests with Playwright
-npm run test:e2e
-
-# Run unit tests
-npm test
-```
-
-For detailed testing information, see [TESTING.md](./docs/TESTING.md).
+For more details on our testing approach, see [docs/e2e-testing-strategy.md](./docs/e2e-testing-strategy.md).

@@ -140,4 +140,4 @@ Feature: Navigation and UI Elements
     When I try to navigate to a new page
     Then I should see a session timeout warning
     And I should be given the option to extend my session
-    Or I should be redirected to the login page if I don't respond 
+    And I should be redirected to the login page if I don't respond

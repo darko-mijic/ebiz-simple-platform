@@ -4,18 +4,32 @@ import {
   ArgumentsHost,
   HttpException,
   HttpStatus,
-  Logger,
+  Inject,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { LoggerService } from '../logger/logger.service';
+
+// Define a type for the Express request with user
+interface RequestWithUser extends Request {
+  user?: {
+    id?: string;
+    [key: string]: any;
+  };
+}
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
-  private readonly logger = new Logger(HttpExceptionFilter.name);
+  constructor(
+    @Inject(LoggerService) private readonly logger: LoggerService
+  ) {}
 
   catch(exception: any, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
-    const request = ctx.getRequest<Request>();
+    const request = ctx.getRequest<RequestWithUser>();
+    
+    // Get correlation ID if available
+    const correlationId = request.headers['x-correlation-id'] || 'unknown';
     
     // Get status code and message based on exception type
     const status = 
@@ -50,7 +64,15 @@ export class HttpExceptionFilter implements ExceptionFilter {
       // Only log detailed error information for server logs
       this.logger.error(
         `${request.method} ${request.url} - ${exception.message || 'Unknown error'}`,
-        exception.stack,
+        {
+          correlationId,
+          path: request.url,
+          method: request.method,
+          statusCode: status,
+          error: exception.message || 'Unknown error',
+          stack: exception.stack,
+          userId: request.user?.id,
+        }
       );
     }
     
@@ -67,6 +89,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
     if (status !== HttpStatus.INTERNAL_SERVER_ERROR) {
       this.logger.warn(
         `${request.method} ${request.url} - Status ${status}: ${message}`,
+        {
+          correlationId,
+          path: request.url,
+          method: request.method,
+          statusCode: status,
+          userId: request.user?.id,
+        }
       );
     }
     

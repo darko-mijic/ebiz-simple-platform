@@ -3,14 +3,44 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "test": "playwright test",
-    "test:ui": "playwright test --ui",
-    "test:debug": "playwright test --debug",
-    "test:report": "playwright show-report"
+    "start:env": "bash scripts/start-test-env.sh",
+    "stop:env": "bash scripts/stop-test-env.sh",
+    "reset:db": "bash scripts/reset-test-db.sh",
+    "seed:db": "node scripts/seed-test-db.js",
+    
+    "test": "cucumber-js",
+    "test:auth": "cucumber-js tests/features/authentication.feature",
+    "test:bank": "cucumber-js tests/features/bank-accounts.feature",
+    "test:dashboard": "cucumber-js tests/features/dashboard.feature",
+    "test:transactions": "cucumber-js tests/features/transactions.feature",
+    "test:statements": "cucumber-js tests/features/bank-statements.feature",
+    "test:documents": "cucumber-js tests/features/documents.feature",
+    "test:chat": "cucumber-js tests/features/chat-interface.feature",
+    "test:navigation": "cucumber-js tests/features/navigation.feature",
+    "test:settings": "cucumber-js tests/features/settings.feature",
+    "test:all": "cucumber-js tests/features/",
+    
+    "test:debug": "HEADLESS=false DEBUG=true cucumber-js --profile debug",
+    "test:ui": "HEADLESS=false cucumber-js",
+    "test:dry": "cucumber-js --profile dry",
+    "test:ci": "cucumber-js --profile ci",
+    "test:generate-steps": "cucumber-js --profile generate-missing-steps > step-templates.js",
+    
+    "clean": "bash cleanup.sh",
+    "pretest": "mkdir -p reports",
+    "posttest": "echo 'Test run completed. See reports directory for results.'"
   },
   "devDependencies": {
     "@playwright/test": "^1.40.0",
     "@types/node": "^20.10.0",
-    "typescript": "^5.3.2"
+    "ts-node": "^10.9.1",
+    "typescript": "^5.2.2"
+  },
+  "dependencies": {
+    "@cucumber/cucumber": "^11.2.0",
+    "@prisma/client": "^5.4.2",
+    "dotenv": "^16.3.1",
+    "playwright": "^1.40.0",
+    "uuid": "^9.0.1"
   }
-} 
+}
