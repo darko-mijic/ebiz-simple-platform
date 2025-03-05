@@ -1,17 +1,90 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "../../../components/ui/button";
 import { Card } from "../../../components/ui/card";
 import { SiGoogle } from "react-icons/si";
+import { useSearchParams } from "next/navigation";
+import { useToast } from "../../../hooks/use-toast";
+
+// Enhanced client-side logging function
+const logAuth = async (action: string, details?: any) => {
+  const logData = {
+    timestamp: new Date().toISOString(),
+    action,
+    ...details,
+  };
+  
+  console.log(`[Auth] ${action}`, logData);
+  
+  // Send to backend
+  try {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+    await fetch(`${apiUrl}/client-logs`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: action,
+        meta: logData,
+      }),
+    });
+  } catch (e) {
+    // Silent fail for logging
+    console.error('Failed to send log to server', e);
+  }
+};
 
 export default function AuthPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const searchParams = useSearchParams();
+  const { toast } = useToast();
+  
+  // Check for error parameter
+  useEffect(() => {
+    if (searchParams) {
+      const error = searchParams.get('error');
+      if (error) {
+        logAuth('Authentication error from query param', { errorType: error });
+        
+        toast({
+          title: "Authentication Failed",
+          description: "There was an error during the authentication process. Please try again.",
+          type: "error",
+        });
+      }
+    }
+  }, [searchParams, toast]);
 
   const handleGoogleLogin = async () => {
-    setIsLoading(true);
-    // Redirect to our backend Google OAuth route
-    window.location.href = "/auth/google";
+    try {
+      setIsLoading(true);
+      
+      // Log the authentication attempt
+      await logAuth('Google login initiated', { 
+        timestamp: new Date().toISOString()
+      });
+      
+      // Redirect to our backend Google OAuth route with proper API URL
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      const redirectUrl = `${apiUrl}/auth/google`;
+      
+      await logAuth('Redirecting to OAuth endpoint', { 
+        redirectUrl 
+      });
+      
+      window.location.href = redirectUrl;
+    } catch (error) {
+      await logAuth('Error during login redirect', { error });
+      setIsLoading(false);
+      
+      toast({
+        title: "Authentication Error",
+        description: "Could not connect to authentication service. Please try again later.",
+        type: "error",
+      });
+    }
   };
 
   return (

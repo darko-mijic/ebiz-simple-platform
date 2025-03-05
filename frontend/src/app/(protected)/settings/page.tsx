@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from 'react';
 import { Button } from "../../../components/ui/button";
 import { Card } from "../../../components/ui/card";
 import { Input } from "../../../components/ui/input";
+import { UserAvatar } from '../../../components/ui/UserAvatar';
+import { useUser } from '../../../components/providers/user-provider';
+import { useToast } from '../../../hooks/use-toast';
 import { 
   User, 
   Building, 
@@ -14,26 +17,43 @@ import {
   Bell, 
   Moon, 
   Sun,
-  Save
+  Save,
+  Languages,
+  ArrowDownUp,
+  BellRing,
+  Info
 } from "lucide-react";
 
 export default function SettingsPage() {
+  const { user, refreshUser } = useUser();
+  const { toast } = useToast();
   const [isDarkMode, setIsDarkMode] = useState(false);
   
-  // Mock user data
+  // Initialize user data from context
   const [userData, setUserData] = useState({
-    firstName: "John",
-    lastName: "Doe",
-    email: "john.doe@example.com",
-    phone: "+49 123 456 7890"
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
   });
   
+  useEffect(() => {
+    if (user) {
+      setUserData({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        email: user.email || '',
+        phone: '', // Add phone if we have it in the User model
+      });
+    }
+  }, [user]);
+
   // Mock company data
   const [companyData, setCompanyData] = useState({
-    name: "Acme GmbH",
-    address: "Musterstraße 123, 10115 Berlin, Germany",
-    vatId: "DE123456789",
-    euVatId: "EU9876543210"
+    name: 'Acme Corp',
+    address: '123 Business St, Berlin, Germany',
+    localVatId: '12345678901',
+    euVatId: 'DE123456789',
   });
   
   // Mock notification settings
@@ -49,6 +69,24 @@ export default function SettingsPage() {
     // This would normally modify the theme in a theme provider
   };
 
+  const handleSavePersonalInfo = () => {
+    // Mock API call to save user data
+    toast({
+      title: "Profile updated",
+      description: "Your personal information has been saved.",
+      type: "success",
+    });
+  };
+  
+  const handleSaveCompanyInfo = () => {
+    // Mock API call to save company data
+    toast({
+      title: "Company updated",
+      description: "Your company information has been saved.",
+      type: "success",
+    });
+  };
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold">Settings</h1>
@@ -61,6 +99,24 @@ export default function SettingsPage() {
               <User className="mr-2 h-5 w-5" />
               Personal Information
             </h2>
+            
+            <div className="flex items-center mb-6">
+              <UserAvatar 
+                profilePictureUrl={user?.profilePictureUrl}
+                firstName={user?.firstName}
+                lastName={user?.lastName}
+                size="lg"
+                className="mr-4"
+              />
+              <div>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                  Profile picture from Google
+                </p>
+                <p className="text-xs text-gray-400">
+                  Your profile picture is automatically updated from your Google account
+                </p>
+              </div>
+            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -94,6 +150,12 @@ export default function SettingsPage() {
                 />
               </div>
             </div>
+            
+            <div className="mt-4 flex justify-end">
+              <Button onClick={handleSavePersonalInfo}>
+                Save Changes
+              </Button>
+            </div>
           </Card>
           
           {/* Company Information */}
@@ -122,8 +184,8 @@ export default function SettingsPage() {
                 <div>
                   <label className="text-sm font-medium mb-1 block">Local VAT ID</label>
                   <Input 
-                    value={companyData.vatId} 
-                    onChange={(e) => setCompanyData({...companyData, vatId: e.target.value})}
+                    value={companyData.localVatId} 
+                    onChange={(e) => setCompanyData({...companyData, localVatId: e.target.value})}
                   />
                 </div>
                 <div>
@@ -134,6 +196,12 @@ export default function SettingsPage() {
                   />
                 </div>
               </div>
+            </div>
+            
+            <div className="mt-4 flex justify-end">
+              <Button onClick={handleSaveCompanyInfo}>
+                Save Changes
+              </Button>
             </div>
           </Card>
         </div>
@@ -226,13 +294,6 @@ export default function SettingsPage() {
             </div>
           </Card>
         </div>
-      </div>
-      
-      <div className="flex justify-end">
-        <Button>
-          <Save className="mr-2 h-4 w-4" />
-          Save Changes
-        </Button>
       </div>
     </div>
   );

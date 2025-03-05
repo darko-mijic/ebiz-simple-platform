@@ -8,7 +8,11 @@
     "start": "next start -p 3001",
     "lint": "next lint",
     "format": "prettier --write .",
-    "kill-ports": "kill-port 3000 3001 || true"
+    "kill-ports": "kill-port 3000 3001 || true",
+    "cy:open": "cypress open",
+    "cy:run": "cypress run",
+    "test": "start-server-and-test 'npm start' http://localhost:3001 'npm run cy:run'",
+    "test:dev": "start-server-and-test 'npm run dev' http://localhost:3001 'npm run cy:open'"
   },
   "dependencies": {
     "@ebiz/libs": "*",
@@ -26,6 +30,7 @@
     "@radix-ui/react-slot": "^1.1.2",
     "@radix-ui/react-tabs": "^1.0.4",
     "@radix-ui/react-toast": "^1.1.5",
+    "axios": "^1.8.1",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
     "date-fns": "^2.30.0",
@@ -47,11 +52,13 @@
     "@types/react": "^18.2.39",
     "@types/react-dom": "^18.2.17",
     "autoprefixer": "^10.4.16",
+    "cypress": "^14.1.0",
     "eslint": "^8.54.0",
     "eslint-config-next": "^14.0.3",
     "kill-port": "^2.0.1",
     "postcss": "^8.4.31",
     "prettier": "^3.1.0",
+    "start-server-and-test": "^2.0.10",
     "tailwindcss": "^3.3.5",
     "typescript": "^5.3.2"
   }

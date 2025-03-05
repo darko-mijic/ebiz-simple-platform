@@ -22,6 +22,9 @@ Feature: User Authentication and Onboarding
     Given I have successfully logged in with Google for the first time
     When I am redirected to the onboarding flow
     Then I should see a form requesting personal and company information
+    And I should see my email pre-filled and read-only
+    And I should be able to edit my first and last name
+    And the phone field should be marked as optional
 
   Scenario: Returning user with completed onboarding
     Given I have previously completed the onboarding process
@@ -33,6 +36,8 @@ Feature: User Authentication and Onboarding
     Given I am on the onboarding form
     When I enter my first name "John"
     And I enter my last name "Doe"
+    And I leave the phone field empty
+    And I select a role "Owner / CEO"
     And I enter company name "Acme Corp"
     And I enter company address "123 Business St, Berlin, Germany"
     And I enter local EU VAT ID "23732108701"
@@ -41,6 +46,19 @@ Feature: User Authentication and Onboarding
     Then I should be redirected to the dashboard
     And I should see "Welcome, John" in the user profile section
     And my user information should be stored in the database with the correct company association
+
+  Scenario: Completing user onboarding with optional phone number
+    Given I am on the onboarding form
+    When I enter my first name "John"
+    And I enter my last name "Doe"
+    And I enter my phone number "+1 (555) 123-4567"
+    And I select a role "Finance Manager"
+    And I enter company name "Acme Corp"
+    And I enter company address "123 Business St, Berlin, Germany"
+    And I enter local EU VAT ID "23732108701"
+    And I click the "Complete Onboarding" button
+    Then I should be redirected to the dashboard
+    And my user information including the phone number should be stored in the database
 
   Scenario: Attempting onboarding with invalid VAT ID
     Given I am on the onboarding form

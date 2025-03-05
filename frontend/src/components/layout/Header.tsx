@@ -3,7 +3,8 @@
 import { usePathname } from 'next/navigation';
 import { Button } from '../ui/button';
 import { cn } from '../../lib/utils';
-import { Menu, Bell, Sun, Moon } from 'lucide-react';
+import { Menu, Bell, Sun, Moon, LogOut } from 'lucide-react';
+import { useUser } from '../../hooks/use-user';
 
 interface HeaderProps {
   className?: string;
@@ -14,6 +15,7 @@ interface HeaderProps {
 
 export function Header({ className, onToggleSidebar, toggleTheme, theme }: HeaderProps) {
   const pathname = usePathname() || '';
+  const { user, logout } = useUser();
 
   // Get the page title based on the current path
   const getPageTitle = () => {
@@ -35,12 +37,29 @@ export function Header({ className, onToggleSidebar, toggleTheme, theme }: Heade
         <h1 className="text-xl font-semibold">{getPageTitle()}</h1>
       </div>
       
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
+        {user && (
+          <div className="flex items-center mr-2">
+            <span className="text-sm mr-2">
+              {user.firstName} {user.lastName}
+            </span>
+            {user.profilePictureUrl && (
+              <img 
+                src={user.profilePictureUrl} 
+                alt="Profile" 
+                className="w-8 h-8 rounded-full"
+              />
+            )}
+          </div>
+        )}
         <Button variant="ghost" size="icon">
           <Bell className="h-5 w-5" />
         </Button>
         <Button variant="ghost" size="icon" onClick={toggleTheme}>
           {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+        </Button>
+        <Button variant="ghost" size="icon" onClick={logout} title="Logout">
+          <LogOut className="h-5 w-5" />
         </Button>
       </div>
     </header>

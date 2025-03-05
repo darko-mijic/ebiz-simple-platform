@@ -7,7 +7,7 @@
     "build": "nest build --webpack",
     "format": "prettier --write \"src/**/*.ts\"",
     "start": "node dist/main",
-    "start:dev": "nest start --watch",
+    "start:dev": "nest start --webpack --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
@@ -29,9 +29,11 @@
     "@nestjs/platform-express": "^10.2.8",
     "@nestjs/swagger": "^7.1.15",
     "@prisma/client": "^5.5.2",
+    "@types/cookie-parser": "^1.4.8",
     "camt-parser": "^1.0.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
+    "cookie-parser": "^1.4.7",
     "langchain": "^0.0.208",
     "multer": "^1.4.5-lts.1",
     "passport": "^0.6.0",
@@ -41,7 +43,8 @@
     "reflect-metadata": "^0.1.13",
     "rimraf": "^5.0.5",
     "rxjs": "^7.8.1",
-    "winston": "^3.11.0"
+    "winston": "^3.11.0",
+    "winston-elasticsearch": "^0.19.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.2.1",
@@ -54,6 +57,7 @@
     "@types/passport-google-oauth20": "^2.0.14",
     "@types/passport-jwt": "^3.0.13",
     "@types/supertest": "^2.0.16",
+    "@types/winston": "^2.4.4",
     "@typescript-eslint/eslint-plugin": "^6.10.0",
     "@typescript-eslint/parser": "^6.10.0",
     "eslint": "^8.53.0",
@@ -87,4 +91,4 @@
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
   }
-} 
+}

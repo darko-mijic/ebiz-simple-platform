@@ -1,29 +1,37 @@
 "use client";
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useToast } from '../../hooks/use-toast';
-import { setAuthCookie } from '../../lib/set-auth-cookie';
+import { useUser } from '../../hooks/use-user';
 
-// Simple mock of authentication for demo purposes
-// In a real app, this would use a proper auth library
-const useAuth = () => {
-  // Mock implementation
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+// Enhanced logging function for auth events
+const logAuthCheck = async (action: string, details?: any) => {
+  const logData = {
+    timestamp: new Date().toISOString(),
+    action,
+    ...details,
+  };
   
-  useEffect(() => {
-    // Check for auth cookie or localStorage token
-    const hasAuthCookie = document.cookie.includes('auth_session');
-    setIsAuthenticated(hasAuthCookie);
-    
-    // For demo purposes, set a cookie to simulate being logged in
-    if (process.env.NODE_ENV === 'development' && !hasAuthCookie) {
-      setAuthCookie();
-      setIsAuthenticated(true);
-    }
-  }, []);
+  console.log(`[AuthCheck] ${action}`, logData);
   
-  return { isAuthenticated };
+  // Send to backend
+  try {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+    await fetch(`${apiUrl}/client-logs`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: action,
+        meta: logData,
+      }),
+    });
+  } catch (e) {
+    // Silent fail for logging
+    console.error('Failed to send log to server', e);
+  }
 };
 
 export default function AuthCheck({
@@ -31,24 +39,32 @@ export default function AuthCheck({
 }: {
   children: React.ReactNode;
 }) {
-  const { isAuthenticated } = useAuth();
+  const { user, loading } = useUser();
   const router = useRouter();
   const { toast } = useToast();
   
   useEffect(() => {
-    if (isAuthenticated === false) {
-      // User is not authenticated, redirect to home
+    if (loading) return;
+    
+    if (!user) {
+      logAuthCheck('User not authenticated, redirecting to auth page');
+      
+      // User is not authenticated, redirect to auth page
       toast({
         title: "Authentication required",
         description: "Please sign in to access this page",
         type: "error",
       });
-      router.push('/');
+      router.push('/auth');
+    } else {
+      logAuthCheck('User authenticated, allowing access', { userId: user.id });
     }
-  }, [isAuthenticated, router, toast]);
+  }, [user, loading, router, toast]);
   
   // Show loading spinner while checking authentication
-  if (isAuthenticated === null) {
+  if (loading) {
+    logAuthCheck('Authentication check in progress, showing loading spinner');
+    
     return (
       <div className="flex items-center justify-center h-screen">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>

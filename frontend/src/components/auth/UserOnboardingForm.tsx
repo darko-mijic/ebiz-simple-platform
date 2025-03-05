@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -20,9 +20,9 @@ const userFormSchema = z.object({
   email: z.string().email({
     message: "Please enter a valid email address.",
   }),
-  phone: z.string().min(10, {
-    message: "Phone number must be at least 10 digits.",
-  }),
+  phone: z.string().refine(val => val === '' || val.length >= 10, {
+    message: "If provided, phone number must be at least 10 digits.",
+  }).optional(),
   role: z.string({
     required_error: "Please select a role.",
   }),
@@ -41,15 +41,64 @@ const defaultValues: Partial<UserFormValues> = {
 
 interface UserOnboardingFormProps {
   onSubmit: (values: UserFormValues) => void;
+  initialData?: Partial<UserFormValues>;
+  isGoogleLogin?: boolean;
 }
 
-export function UserOnboardingForm({ onSubmit }: UserOnboardingFormProps) {
+// Enhanced logging function for onboarding events
+const logOnboardingEvent = async (action: string, details?: any) => {
+  const logData = {
+    timestamp: new Date().toISOString(),
+    action,
+    ...details,
+  };
+  
+  try {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+    await fetch(`${apiUrl}/client-logs`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: action,
+        meta: logData,
+      }),
+    });
+  } catch (e) {
+    // Silent fail for logging
+  }
+};
+
+export function UserOnboardingForm({ onSubmit, initialData = {}, isGoogleLogin = false }: UserOnboardingFormProps) {
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userFormSchema),
-    defaultValues,
+    defaultValues: { ...defaultValues, ...initialData },
   });
 
+  // This effect will update form values when initialData changes
+  useEffect(() => {
+    if (initialData) {
+      // Log the data being loaded from Google profile
+      logOnboardingEvent('Loading user data from profile', { 
+        hasFirstName: !!initialData.firstName,
+        hasLastName: !!initialData.lastName,
+        hasEmail: !!initialData.email,
+        hasPhone: !!initialData.phone,
+        isGoogleLogin 
+      });
+      
+      // Reset form with new values
+      form.reset({ ...defaultValues, ...initialData });
+    }
+  }, [initialData, form, isGoogleLogin]);
+
   function handleSubmit(data: UserFormValues) {
+    logOnboardingEvent('User form submitted', { 
+      hasPhone: !!data.phone,
+      role: data.role,
+      isGoogleLogin 
+    });
     onSubmit(data);
   }
 
@@ -92,10 +141,18 @@ export function UserOnboardingForm({ onSubmit }: UserOnboardingFormProps) {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input placeholder="john.doe@example.com" type="email" {...field} />
+                <Input 
+                  placeholder="john.doe@example.com" 
+                  type="email" 
+                  {...field} 
+                  readOnly={isGoogleLogin}
+                  className={isGoogleLogin ? "bg-gray-100 cursor-not-allowed" : ""}
+                />
               </FormControl>
               <FormDescription>
-                This email will be used for account notifications.
+                {isGoogleLogin 
+                  ? "This email is provided by your Google account and cannot be changed."
+                  : "This email will be used for account notifications."}
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -107,7 +164,7 @@ export function UserOnboardingForm({ onSubmit }: UserOnboardingFormProps) {
           name="phone"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Phone Number</FormLabel>
+              <FormLabel>Phone Number (Optional)</FormLabel>
               <FormControl>
                 <Input placeholder="+1 (555) 123-4567" {...field} />
               </FormControl>

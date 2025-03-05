@@ -1,0 +1,40 @@
+# Test environment services for E2E testing
+services:
+  # PostgreSQL Database for testing
+  postgres_test:
+    image: postgres:15
+    ports:
+      - "5433:5432"  # Different port to avoid conflicts with dev environment
+    environment:
+      POSTGRES_USER: ebiz_test
+      POSTGRES_PASSWORD: ebiz_test_pwd
+      POSTGRES_DB: ebiz_test
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ebiz_test -d ebiz_test"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # MinIO Storage for testing documents
+  minio_test:
+    image: minio/minio
+    ports:
+      - "9002:9000"  # Different port to avoid conflicts 
+      - "9003:9001"  # Different port for console
+    volumes:
+      - minio_test_data:/data
+    environment:
+      MINIO_ROOT_USER: minio_test
+      MINIO_ROOT_PASSWORD: minio_test_pwd
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  postgres_test_data:
+  minio_test_data:

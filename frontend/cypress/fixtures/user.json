@@ -1,0 +1,10 @@
+{
+  "id": "test-user-id",
+  "googleId": "123456789",
+  "firstName": "Test",
+  "lastName": "User",
+  "email": "test.user@example.com",
+  "phone": "+1234567890",
+  "profilePictureUrl": "https://via.placeholder.com/150",
+  "isOnboardingCompleted": false
+} 

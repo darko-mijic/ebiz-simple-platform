@@ -1,3 +1,11 @@
+/* Fix for unwanted scrollbars on the login page */
+html, body {
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -35,35 +43,49 @@
     --radius: 0.5rem;
   }
  
+  /* Modified dark theme for better readability */
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 222.2 47.4% 11.2%;   /* Slightly lighter background */
     --foreground: 210 40% 98%;
  
-    --card: 222.2 84% 4.9%;
+    --card: 222.2 47.4% 11.2%;
     --card-foreground: 210 40% 98%;
  
-    --popover: 222.2 84% 4.9%;
+    --popover: 222.2 47.4% 11.2%;
     --popover-foreground: 210 40% 98%;
  
     --primary: 210 40% 98%;
     --primary-foreground: 222.2 47.4% 11.2%;
  
-    --secondary: 217.2 32.6% 17.5%;
+    --secondary: 217.2 32.6% 20.5%;    /* Slightly lighter for better contrast */
     --secondary-foreground: 210 40% 98%;
  
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 217.2 32.6% 20.5%;
+    --muted-foreground: 215 20.2% 75.1%; /* Brighter muted text */
  
-    --accent: 217.2 32.6% 17.5%;
+    --accent: 217.2 32.6% 20.5%;
     --accent-foreground: 210 40% 98%;
  
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 72.8% 40.6%;      /* Brighter destructive color */
     --destructive-foreground: 210 40% 98%;
  
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
+    --border: 217.2 32.6% 30.5%;        /* Lighter border */
+    --input: 217.2 32.6% 30.5%;         /* Lighter input */
     --ring: 212.7 26.8% 83.9%;
   }
+}
+
+/* Custom input styles for dark theme to improve readability */
+.dark input[readonly],
+.dark input:disabled,
+.dark select:disabled {
+  background-color: hsl(217.2 32.6% 15%) !important; 
+  color: hsl(215 20.2% 75.1%) !important;
+  opacity: 1 !important;
+}
+
+.dark .bg-gray-100 {
+  background-color: hsl(217.2 32.6% 15%) !important;
 }
  
 @layer base {
