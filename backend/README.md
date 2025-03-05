@@ -64,17 +64,12 @@ npm run start:dev
 
 ### Database Management
 
-- **PostgreSQL**: Running on port 5432
-- **pgAdmin 4**: Web interface available at http://localhost:5050
-  - Login with admin@admin.com / admin
-  - Connect to the PostgreSQL server with:
-    - Host: postgres
-    - Port: 5432
-    - Username: postgres
-    - Password: postgres
-    - Database: ebiz_platform
-- **MinIO**: S3-compatible storage for documents available at http://localhost:9001
-  - Login with minioadmin / minioadmin
+- **PostgreSQL**: Running on port 5432 with the following credentials:
+  - Username: ebizadmin
+  - Password: ebiz_secure_pwd
+  - Database: ebiz_saas
+
+Note: We've simplified our Docker setup to include only PostgreSQL for use with Prisma ORM.
 
 ### Database Schema
 

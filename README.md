@@ -14,7 +14,7 @@ EBIZ-Saas is a modern financial management platform tailored for small to medium
 
 - **Frontend**: Next.js with SWR and shadcn/ui
 - **Backend**: NestJS with Prisma and LangChain.js
-- **Databases**: PostgreSQL (relational data) and Qdrant (vector database)
+- **Database**: PostgreSQL (relational data)
 - **Monorepo**: npm workspaces
 
 ## Project Structure
@@ -50,10 +50,11 @@ ebiz-simple-platform/
    npm install
    ```
 
-3. Start the databases:
+3. Start the database:
    ```
    docker compose up -d
    ```
+   Note: The Docker setup has been simplified to only include PostgreSQL configured for Prisma ORM.
 
 4. Run the application:
    ```
@@ -70,8 +71,7 @@ Create `.env` files in the backend and frontend directories:
 
 ### Backend (.env)
 ```
-DATABASE_URL=postgresql://user:password@localhost:5432/ebiz
-QDRANT_HOST=http://localhost:6333
+DATABASE_URL=postgresql://ebizadmin:ebiz_secure_pwd@localhost:5432/ebiz_saas
 GOOGLE_CLIENT_ID=your_google_client_id
 GOOGLE_CLIENT_SECRET=your_google_client_secret
 JWT_SECRET=your_jwt_secret
